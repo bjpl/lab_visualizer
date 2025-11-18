@@ -1,0 +1,124 @@
+name: Deploy Production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  deployments: write
+
+jobs:
+  pre-deployment-checks:
+    name: Pre-Deployment Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run full test suite
+        run: npm run test:all
+
+      - name: Verify build
+        run: npm run build
+
+      - name: Check bundle size
+        run: |
+          BUNDLE_SIZE=$(du -sb dist/assets/*.js | awk '{sum+=$1} END {print sum}')
+          echo "Production bundle size: $(($BUNDLE_SIZE / 1024))KB"
+
+      - name: Security audit
+        run: npm audit --production --audit-level=high
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: pre-deployment-checks
+    environment:
+      name: production
+      url: https://lab-visualizer.vercel.app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build for production
+        run: npm run build
+        env:
+          VITE_API_URL: ${{ secrets.PRODUCTION_API_URL }}
+          VITE_SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          VITE_SENTRY_ENVIRONMENT: production
+          VITE_ENABLE_ANALYTICS: true
+          VITE_VERCEL_ANALYTICS_ID: ${{ secrets.VERCEL_ANALYTICS_ID }}
+
+      - name: Create Sentry release
+        uses: getsentry/action-release@v1
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+        with:
+          environment: production
+          sourcemaps: './dist/assets'
+
+      - name: Deploy to Vercel Production
+        id: deploy
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod'
+          scope: ${{ secrets.VERCEL_ORG_ID }}
+
+      - name: Run smoke tests
+        run: npm run test:smoke
+        env:
+          BASE_URL: https://lab-visualizer.vercel.app
+
+      - name: Notify deployment success
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const sha = context.sha.substring(0, 7);
+            const url = 'https://lab-visualizer.vercel.app';
+            console.log(`✅ Deployed ${sha} to production: ${url}`);
+
+  post-deployment-monitoring:
+    name: Post-Deployment Monitoring
+    runs-on: ubuntu-latest
+    needs: deploy-production
+    steps:
+      - name: Wait for deployment propagation
+        run: sleep 30
+
+      - name: Run Lighthouse audit
+        uses: treosh/lighthouse-ci-action@v11
+        with:
+          urls: https://lab-visualizer.vercel.app
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+
+      - name: Monitor initial traffic
+        run: |
+          echo "Monitoring initial production traffic..."
+          echo "Check Vercel Analytics dashboard for real-time metrics"
+
+      - name: Check Sentry for errors
+        run: |
+          echo "Monitor Sentry dashboard for any deployment-related errors"
+          echo "https://sentry.io/organizations/${{ secrets.SENTRY_ORG }}/projects/${{ secrets.SENTRY_PROJECT }}/"

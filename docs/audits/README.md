@@ -1,0 +1,183 @@
+# Audit Reports Index
+**Project:** lab_visualizer
+**Last Updated:** 2025-11-17
+
+---
+
+## Latest Audit Reports (2025-11-17)
+
+### Executive Summary
+📄 **[AUDIT_SUMMARY.md](./AUDIT_SUMMARY.md)** - Quick reference and key findings
+
+**Overall Health Score:** 78/100 (GOOD)
+
+### Detailed Reports
+
+#### 1. Repository Audits (REPO-1, REPO-2, REPO-3)
+📄 **[REPO_AUDIT_2025-11-17.md](./REPO_AUDIT_2025-11-17.md)**
+
+**Covers:**
+- REPO-1: Language & Framework Audit (TypeScript, Next.js, React, Testing)
+- REPO-2: Project Type Classification (Architecture, Patterns, Structure)
+- REPO-3: i18n & Accessibility Audit (ARIA, WCAG, Semantic HTML)
+
+**Key Scores:**
+- Languages: 95/100 ✅
+- Frameworks: 80/100 ⚠️
+- Testing: 95/100 ✅
+- Accessibility: 75/100 ⚠️
+- i18n: 40/100 ❌
+
+#### 2. Dependency Audits (DEP-1, DEP-2, DEP-3)
+📄 **[DEP_AUDIT_2025-11-17.md](./DEP_AUDIT_2025-11-17.md)**
+
+**Covers:**
+- DEP-1: Dependency Health Check (npm outdated, security vulnerabilities)
+- DEP-2: Development Environment (Node.js, IDE, git hooks)
+- DEP-3: Package Manager & Build Tools (npm, Vite, build scripts)
+
+**Key Scores:**
+- Dependency Health: 65/100 ⚠️
+- Dev Environment: 85/100 ✅
+- Package Manager: 85/100 ✅
+
+**Critical Findings:**
+- 🔴 2 moderate security vulnerabilities (vite/esbuild)
+- ⚠️ 5 major package updates available
+- ❌ Missing .nvmrc and engines field
+
+#### 3. Upgrade Roadmap
+📄 **[UPGRADE_ROADMAP.md](./UPGRADE_ROADMAP.md)**
+
+**Phased Upgrade Plan:**
+- **Phase 1:** Security & Foundation (Week 1) 🔴
+- **Phase 2:** Tooling Modernization (Week 2-3) 🟡
+- **Phase 3:** React Ecosystem Upgrade (Week 3-5) 🟡
+- **Phase 4:** Continuous Improvement (Ongoing) 🔵
+
+**Total Timeline:** 4-6 weeks
+
+---
+
+## Critical Actions Required
+
+### Immediate (This Week)
+1. 🔴 **Fix vite security vulnerability** → Upgrade to 7.2.2
+2. 🔴 **Add .nvmrc file** → Create with Node.js 20
+3. 🔴 **Add engines field** → Specify Node.js ≥20
+4. 🔴 **Fix build scripts** → Use Next.js instead of Vite
+
+### Short Term (This Month)
+1. 🟡 Update ESLint to v9 with flat config
+2. 🟡 Update TypeScript ESLint to v8
+3. 🟡 Add .vscode configuration
+4. 🟡 Add .editorconfig
+
+### Long Term (Next Quarter)
+1. 🟢 Plan React 19 migration
+2. 🟢 Plan Next.js 15/16 migration
+3. 🟢 Conduct WCAG 2.1 AA audit
+4. 🟢 Evaluate i18n requirements
+
+---
+
+## Previous Audit Reports
+
+### Other Audits Available
+- **[DOC-AUDIT-REPORT.md](./DOC-AUDIT-REPORT.md)** - Documentation audit
+- **[SECURITY-AUDIT-REPORT.md](./SECURITY-AUDIT-REPORT.md)** - Security audit
+- **[AUDIT-EXECUTIVE-SUMMARY.md](./AUDIT-EXECUTIVE-SUMMARY.md)** - Previous executive summary
+- **[repository-dependency-audit.md](./repository-dependency-audit.md)** - Earlier dependency audit
+
+---
+
+## Quick Reference
+
+### Technology Stack (Current)
+```json
+{
+  "framework": "Next.js 14.2.33",
+  "language": "TypeScript 5.0.0",
+  "ui": "React 18.3.1",
+  "styling": "Tailwind CSS",
+  "testing": "Vitest + Playwright",
+  "build": "Vite 5.4.21",
+  "linting": "ESLint 8.57.1 + Prettier"
+}
+```
+
+### Target Versions (After Upgrades)
+```json
+{
+  "framework": "Next.js 16.0.3",
+  "language": "TypeScript 5.x",
+  "ui": "React 19.2.0",
+  "styling": "Tailwind CSS",
+  "testing": "Vitest + Playwright",
+  "build": "Vite 7.2.2",
+  "linting": "ESLint 9.39.1 + Prettier"
+}
+```
+
+---
+
+## Audit Methodology
+
+### REPO Audits
+- **REPO-1:** Language & framework versions, best practices
+- **REPO-2:** Architecture classification, patterns, structure
+- **REPO-3:** Internationalization and accessibility compliance
+
+### DEP Audits
+- **DEP-1:** Dependency health, security, outdated packages
+- **DEP-2:** Development environment, tooling, IDE setup
+- **DEP-3:** Package manager, build tools, reproducibility
+
+### Analysis Tools Used
+- `npm outdated` - Package version analysis
+- `npm audit` - Security vulnerability scanning
+- Manual code review - Accessibility and patterns
+- TypeScript compiler - Type safety verification
+- ESLint - Code quality analysis
+
+---
+
+## Next Steps
+
+1. **Review** all audit reports with team
+2. **Prioritize** fixes based on severity
+3. **Schedule** Phase 1 upgrade work
+4. **Assign** team members to tasks
+5. **Track** progress with tickets
+6. **Test** thoroughly after each phase
+
+---
+
+## Contact & Questions
+
+For questions about these audits:
+1. Review the detailed reports
+2. Check the upgrade roadmap for timelines
+3. Consult with the architecture team
+4. Create GitHub issues for tracking
+
+---
+
+## Change Log
+
+### 2025-11-17
+- ✅ Completed comprehensive REPO audits (REPO-1, REPO-2, REPO-3)
+- ✅ Completed comprehensive DEP audits (DEP-1, DEP-2, DEP-3)
+- ✅ Created upgrade roadmap with 4-phase approach
+- ✅ Identified 2 moderate security vulnerabilities
+- ✅ Documented 5 major package updates needed
+
+### Next Review
+- After Phase 1 completion (Q4 2025)
+- Full audit after all upgrades (Q1 2026)
+
+---
+
+**Generated by:** System Architecture Designer
+**Date:** 2025-11-17
+**Status:** ✅ COMPLETE

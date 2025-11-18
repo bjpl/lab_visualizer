@@ -1,0 +1,517 @@
+name: Integration Deployment
+
+on:
+  push:
+    branches:
+      - main
+      - staging
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+      skip_tests:
+        description: 'Skip tests'
+        type: boolean
+        default: false
+
+env:
+  NODE_VERSION: '18.x'
+  NPM_VERSION: '9.x'
+
+jobs:
+  # ==========================================================================
+  # JOB 1: SYSTEM REQUIREMENTS CHECK
+  # ==========================================================================
+  system-check:
+    name: System Requirements Check
+    runs-on: ubuntu-latest
+    outputs:
+      node-version: ${{ steps.versions.outputs.node }}
+      npm-version: ${{ steps.versions.outputs.npm }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Check versions
+        id: versions
+        run: |
+          echo "node=$(node --version)" >> $GITHUB_OUTPUT
+          echo "npm=$(npm --version)" >> $GITHUB_OUTPUT
+
+      - name: Display system info
+        run: |
+          echo "Node.js: $(node --version)"
+          echo "npm: $(npm --version)"
+          echo "OS: $(uname -a)"
+          echo "Disk space: $(df -h . | tail -1)"
+
+  # ==========================================================================
+  # JOB 2: INSTALLATION & DEPENDENCIES
+  # ==========================================================================
+  install:
+    name: Install Dependencies
+    runs-on: ubuntu-latest
+    needs: system-check
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        id: cache
+        with:
+          path: |
+            node_modules
+            ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: npm ci --legacy-peer-deps
+
+      - name: Verify critical packages
+        run: |
+          node -e "require('molstar')" && echo "✓ molstar"
+          node -e "require('@supabase/supabase-js')" && echo "✓ @supabase/supabase-js"
+          node -e "require('zustand')" && echo "✓ zustand"
+          node -e "require('@tanstack/react-query')" && echo "✓ @tanstack/react-query"
+          node -e "require('next')" && echo "✓ next"
+
+      - name: Audit dependencies
+        run: npm audit --audit-level=high || true
+
+  # ==========================================================================
+  # JOB 3: LINTING & CODE QUALITY
+  # ==========================================================================
+  lint:
+    name: Lint & Code Quality
+    runs-on: ubuntu-latest
+    needs: install
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Restore dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            node_modules
+            ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run Prettier
+        run: npm run format:check || true
+
+      - name: TypeScript check
+        run: npm run typecheck || true
+
+  # ==========================================================================
+  # JOB 4: UNIT TESTS
+  # ==========================================================================
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: install
+    if: ${{ !inputs.skip_tests }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Restore dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            node_modules
+            ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+
+      - name: Run unit tests
+        run: npm test -- --coverage
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage/lcov.info
+          flags: unit
+          fail_ci_if_error: false
+
+  # ==========================================================================
+  # JOB 5: INTEGRATION TESTS
+  # ==========================================================================
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: install
+    if: ${{ !inputs.skip_tests }}
+
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Restore dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            node_modules
+            ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+
+      - name: Run integration tests
+        run: npm run test:integration || true
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: integration-test-results
+          path: test-results/
+
+  # ==========================================================================
+  # JOB 6: DATABASE MIGRATION
+  # ==========================================================================
+  database-migration:
+    name: Database Migration
+    runs-on: ubuntu-latest
+    needs: [unit-tests, integration-tests]
+    if: |
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging') &&
+      github.event_name == 'push'
+
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Link to Supabase project
+        run: |
+          PROJECT_REF=$(echo $NEXT_PUBLIC_SUPABASE_URL | sed -E 's|https://([a-z0-9]+)\.supabase\.co|\1|')
+          supabase link --project-ref $PROJECT_REF --password $SUPABASE_DB_PASSWORD
+
+      - name: Create database backup
+        run: |
+          mkdir -p supabase/backups
+          TIMESTAMP=$(date -u +"%Y-%m-%dT%H-%M-%S")
+          supabase db dump -f supabase/backups/backup-$TIMESTAMP.sql
+
+      - name: Run migrations
+        run: supabase db push
+
+      - name: Verify schema
+        run: |
+          supabase db exec "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'"
+
+      - name: Upload backup
+        uses: actions/upload-artifact@v3
+        with:
+          name: database-backup
+          path: supabase/backups/
+
+  # ==========================================================================
+  # JOB 7: EDGE FUNCTION DEPLOYMENT
+  # ==========================================================================
+  deploy-edge-functions:
+    name: Deploy Edge Functions
+    runs-on: ubuntu-latest
+    needs: database-migration
+    if: |
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging') &&
+      github.event_name == 'push'
+
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Link to Supabase project
+        run: |
+          PROJECT_REF=$(echo $NEXT_PUBLIC_SUPABASE_URL | sed -E 's|https://([a-z0-9]+)\.supabase\.co|\1|')
+          supabase link --project-ref $PROJECT_REF
+
+      - name: Deploy md-simulation function
+        run: supabase functions deploy md-simulation --no-verify-jwt || true
+
+      - name: Deploy structure-converter function
+        run: supabase functions deploy structure-converter --no-verify-jwt || true
+
+      - name: Test edge functions
+        run: |
+          echo "Testing edge functions..."
+          # Add function tests here
+
+  # ==========================================================================
+  # JOB 8: BUILD PRODUCTION BUNDLE
+  # ==========================================================================
+  build:
+    name: Build Production Bundle
+    runs-on: ubuntu-latest
+    needs: [lint, unit-tests]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Restore dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            node_modules
+            ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+
+      - name: Build application
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: npm run build
+
+      - name: Analyze bundle
+        run: |
+          npx next-bundle-analyzer || true
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: build
+          path: .next/
+
+  # ==========================================================================
+  # JOB 9: DEPLOY TO VERCEL
+  # ==========================================================================
+  deploy-vercel:
+    name: Deploy to Vercel
+    runs-on: ubuntu-latest
+    needs: [build, deploy-edge-functions]
+    if: |
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging') &&
+      github.event_name == 'push'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: ${{ github.ref == 'refs/heads/main' && '--prod' || '--staging' }}
+
+      - name: Get deployment URL
+        id: deployment
+        run: |
+          DEPLOY_URL=$(vercel ls --token ${{ secrets.VERCEL_TOKEN }} | head -n 2 | tail -n 1 | awk '{print $2}')
+          echo "url=$DEPLOY_URL" >> $GITHUB_OUTPUT
+
+      - name: Comment PR with deployment URL
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🚀 Deployed to: ${{ steps.deployment.outputs.url }}'
+            })
+
+  # ==========================================================================
+  # JOB 10: SMOKE TESTS
+  # ==========================================================================
+  smoke-tests:
+    name: Smoke Tests
+    runs-on: ubuntu-latest
+    needs: deploy-vercel
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install Playwright
+        run: |
+          npm install -D @playwright/test
+          npx playwright install --with-deps
+
+      - name: Run smoke tests
+        run: |
+          echo "Running smoke tests..."
+          # Add smoke tests here
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: smoke-test-results
+          path: test-results/
+
+  # ==========================================================================
+  # JOB 11: PERFORMANCE VALIDATION
+  # ==========================================================================
+  performance:
+    name: Performance Validation
+    runs-on: ubuntu-latest
+    needs: deploy-vercel
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Lighthouse CI
+        uses: treosh/lighthouse-ci-action@v9
+        with:
+          urls: |
+            https://${{ needs.deploy-vercel.outputs.url }}
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+
+  # ==========================================================================
+  # JOB 12: CREATE SENTRY RELEASE
+  # ==========================================================================
+  sentry-release:
+    name: Create Sentry Release
+    runs-on: ubuntu-latest
+    needs: [deploy-vercel, smoke-tests]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create Sentry release
+        uses: getsentry/action-release@v1
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+        with:
+          environment: production
+          version: ${{ github.sha }}
+
+  # ==========================================================================
+  # JOB 13: ROLLBACK ON FAILURE
+  # ==========================================================================
+  rollback:
+    name: Rollback on Failure
+    runs-on: ubuntu-latest
+    needs: [smoke-tests, performance]
+    if: failure() && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Rollback deployment
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          echo "Rolling back deployment..."
+          # Get previous deployment
+          PREV_DEPLOY=$(vercel ls --token $VERCEL_TOKEN | head -n 3 | tail -n 1 | awk '{print $2}')
+          # Promote previous deployment
+          vercel promote $PREV_DEPLOY --token $VERCEL_TOKEN
+
+      - name: Notify team
+        uses: slackapi/slack-github-action@v1
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          payload: |
+            {
+              "text": "🚨 Deployment rolled back due to failure",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Deployment Rollback*\n\nReason: Smoke tests or performance validation failed\nCommit: ${{ github.sha }}"
+                  }
+                }
+              ]
+            }

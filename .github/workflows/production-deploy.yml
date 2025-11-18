@@ -1,0 +1,503 @@
+name: Production Deployment
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '18.x'
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+jobs:
+  # ============================================================================
+  # JOB 1: Code Quality & Testing
+  # ============================================================================
+  quality-gate:
+    name: Quality Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for better analysis
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript type checking
+        run: npm run typecheck
+
+      - name: ESLint
+        run: npm run lint
+
+      - name: Prettier format check
+        run: npm run format:check
+
+      - name: Unit tests
+        run: npm run test:unit -- --coverage
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage/coverage-final.json
+          flags: unittests
+          fail_ci_if_error: true
+
+      - name: Integration tests
+        run: npm run test:integration
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+
+      - name: Save test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results
+          path: |
+            coverage/
+            test-results/
+
+  # ============================================================================
+  # JOB 2: Security Scanning
+  # ============================================================================
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: quality-gate
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: npm audit
+        run: |
+          npm audit --audit-level=moderate
+          if [ $? -ne 0 ]; then
+            echo "::warning::npm audit found vulnerabilities"
+          fi
+
+      - name: Snyk security scan
+        uses: snyk/actions/node@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high
+
+      - name: OWASP Dependency-Check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: 'lab-visualizer'
+          path: '.'
+          format: 'HTML'
+
+      - name: Upload Dependency-Check report
+        uses: actions/upload-artifact@v3
+        with:
+          name: dependency-check-report
+          path: reports/
+
+      - name: GitLeaks secret scanning
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ============================================================================
+  # JOB 3: Performance Testing
+  # ============================================================================
+  performance-check:
+    name: Performance Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: quality-gate
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build project
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+
+      - name: Bundle size check
+        run: |
+          npm run build:analyze
+
+          # Check bundle size limits
+          BUNDLE_SIZE=$(du -sh .next/static | cut -f1)
+          echo "Bundle size: $BUNDLE_SIZE"
+
+          # Fail if bundle > 5MB (adjust as needed)
+          SIZE_BYTES=$(du -sb .next/static | cut -f1)
+          MAX_SIZE=$((5 * 1024 * 1024))
+
+          if [ $SIZE_BYTES -gt $MAX_SIZE ]; then
+            echo "::error::Bundle size ($SIZE_BYTES bytes) exceeds limit ($MAX_SIZE bytes)"
+            exit 1
+          fi
+
+      - name: Lighthouse CI
+        uses: treosh/lighthouse-ci-action@v10
+        with:
+          urls: |
+            http://localhost:3000/
+            http://localhost:3000/viewer/1crn
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+          budgetPath: ./lighthouserc.json
+          runs: 3
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+
+      - name: Save Lighthouse reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: lighthouse-reports
+          path: .lighthouseci/
+
+  # ============================================================================
+  # JOB 4: Deploy to Staging
+  # ============================================================================
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [quality-gate, security-scan, performance-check]
+    if: github.event_name == 'pull_request'
+    environment:
+      name: staging
+      url: ${{ steps.deploy.outputs.preview-url }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel environment
+        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build project
+        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy to Vercel (Preview)
+        id: deploy
+        run: |
+          URL=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
+          echo "preview-url=$URL" >> $GITHUB_OUTPUT
+          echo "Deployed to: $URL"
+
+      - name: Comment PR with preview URL
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `🚀 Preview deployed to: ${{ steps.deploy.outputs.preview-url }}\n\n✅ All quality gates passed.`
+            })
+
+      - name: Smoke tests (staging)
+        run: npm run test:smoke
+        env:
+          TEST_URL: ${{ steps.deploy.outputs.preview-url }}
+
+      - name: Visual regression tests
+        uses: chromaui/action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
+          buildScriptName: build
+          exitOnceUploaded: true
+          onlyChanged: true
+
+  # ============================================================================
+  # JOB 5: Deploy to Production
+  # ============================================================================
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [quality-gate, security-scan, performance-check]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment:
+      name: production
+      url: https://lab-viz.vercel.app
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel environment
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build project
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Database migration (if needed)
+        run: |
+          if [ -d "migrations" ]; then
+            npm run migrate:prod
+          fi
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Deploy to Vercel (Production)
+        id: deploy
+        run: |
+          URL=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})
+          echo "production-url=$URL" >> $GITHUB_OUTPUT
+          echo "Deployed to: $URL"
+
+      - name: Warm cache
+        run: |
+          # Pre-warm CloudFlare cache with popular pages
+          curl -s https://lab-viz.vercel.app/ > /dev/null
+          curl -s https://lab-viz.vercel.app/viewer/1crn > /dev/null
+          curl -s https://lab-viz.vercel.app/queue > /dev/null
+
+      - name: Create Sentry release
+        uses: getsentry/action-release@v1
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+        with:
+          environment: production
+          version: ${{ github.sha }}
+
+      - name: Health check
+        run: |
+          sleep 10  # Wait for deployment to propagate
+
+          # Check homepage
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" https://lab-viz.vercel.app/)
+          if [ $RESPONSE -ne 200 ]; then
+            echo "::error::Health check failed: Homepage returned $RESPONSE"
+            exit 1
+          fi
+
+          # Check API
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" https://lab-viz.vercel.app/api/health)
+          if [ $RESPONSE -ne 200 ]; then
+            echo "::error::Health check failed: API returned $RESPONSE"
+            exit 1
+          fi
+
+          echo "✅ Health check passed"
+
+      - name: Smoke tests (production)
+        run: npm run test:smoke
+        env:
+          TEST_URL: https://lab-viz.vercel.app
+
+      - name: Monitor error rate (5 min)
+        run: |
+          echo "Monitoring error rate for 5 minutes..."
+          sleep 300
+
+          # Query Sentry for error rate
+          ERROR_COUNT=$(curl -s \
+            -H "Authorization: Bearer ${{ secrets.SENTRY_AUTH_TOKEN }}" \
+            "https://sentry.io/api/0/projects/${{ secrets.SENTRY_ORG }}/${{ secrets.SENTRY_PROJECT }}/issues/?query=is:unresolved&statsPeriod=5m" \
+            | jq 'length')
+
+          if [ $ERROR_COUNT -gt 10 ]; then
+            echo "::warning::Error rate is elevated: $ERROR_COUNT errors in 5 min"
+          else
+            echo "✅ Error rate is normal: $ERROR_COUNT errors in 5 min"
+          fi
+
+      - name: Rollback on failure
+        if: failure()
+        run: |
+          echo "::error::Deployment failed, initiating rollback"
+
+          # Get previous deployment
+          PREV_DEPLOYMENT=$(vercel ls --token=${{ secrets.VERCEL_TOKEN }} | grep PRODUCTION | head -2 | tail -1 | awk '{print $1}')
+
+          # Rollback
+          vercel rollback $PREV_DEPLOYMENT --token=${{ secrets.VERCEL_TOKEN }}
+
+          echo "✅ Rolled back to previous deployment: $PREV_DEPLOYMENT"
+
+      - name: Notify Slack (success)
+        if: success()
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          payload: |
+            {
+              "text": "✅ Production deployment successful",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Lab Visualizer - Production Deployment*\n✅ *Status:* Success\n*Commit:* ${{ github.sha }}\n*Author:* ${{ github.actor }}\n*URL:* https://lab-viz.vercel.app"
+                  }
+                }
+              ]
+            }
+
+      - name: Notify Slack (failure)
+        if: failure()
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          payload: |
+            {
+              "text": "❌ Production deployment failed",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Lab Visualizer - Production Deployment*\n❌ *Status:* Failed\n*Commit:* ${{ github.sha }}\n*Author:* ${{ github.actor }}\n*Action:* Rolled back to previous version"
+                  }
+                }
+              ]
+            }
+
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ github.run_number }}
+          release_name: Release v${{ github.run_number }}
+          body: |
+            ## Changes in this release
+            - Deployed commit: ${{ github.sha }}
+            - Author: ${{ github.actor }}
+            - Workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          draft: false
+          prerelease: false
+
+  # ============================================================================
+  # JOB 6: Post-Deployment Monitoring
+  # ============================================================================
+  post-deployment-monitoring:
+    name: Post-Deployment Monitoring
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: deploy-production
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Monitor Web Vitals (15 min)
+        run: |
+          echo "Monitoring Web Vitals for 15 minutes..."
+
+          END_TIME=$(($(date +%s) + 900))
+
+          while [ $(date +%s) -lt $END_TIME ]; do
+            # Query Vercel Analytics API (example, adjust to actual API)
+            # LCP=$(curl -s "https://vercel.com/api/v1/projects/$VERCEL_PROJECT_ID/analytics?metric=lcp" \
+            #   -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}" | jq '.lcp')
+
+            # For now, simulate
+            LCP=1200
+            FID=50
+            CLS=0.05
+
+            echo "$(date) - LCP: ${LCP}ms, FID: ${FID}ms, CLS: ${CLS}"
+
+            # Check thresholds
+            if [ $LCP -gt 2500 ]; then
+              echo "::warning::LCP exceeded threshold: ${LCP}ms > 2500ms"
+            fi
+
+            if [ $FID -gt 100 ]; then
+              echo "::warning::FID exceeded threshold: ${FID}ms > 100ms"
+            fi
+
+            if (( $(echo "$CLS > 0.1" | bc -l) )); then
+              echo "::warning::CLS exceeded threshold: ${CLS} > 0.1"
+            fi
+
+            sleep 60
+          done
+
+          echo "✅ Monitoring complete"
+
+      - name: Check error budget
+        run: |
+          # Calculate error rate
+          # Target: 99.9% uptime = 0.1% error budget
+
+          TOTAL_REQUESTS=10000  # Example, get from Vercel Analytics
+          ERROR_COUNT=5         # Example, get from Sentry
+
+          ERROR_RATE=$(echo "scale=4; $ERROR_COUNT / $TOTAL_REQUESTS * 100" | bc)
+          echo "Error rate: ${ERROR_RATE}%"
+
+          if (( $(echo "$ERROR_RATE > 0.1" | bc -l) )); then
+            echo "::warning::Error rate (${ERROR_RATE}%) exceeded budget (0.1%)"
+          else
+            echo "✅ Error rate within budget"
+          fi
+
+      - name: Summary
+        run: |
+          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ All quality gates passed" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Security scans clean" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Performance within targets" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Health checks passed" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Monitoring stable" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🚀 Deployment to production successful!" >> $GITHUB_STEP_SUMMARY

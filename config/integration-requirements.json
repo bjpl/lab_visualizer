@@ -1,0 +1,558 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "LAB Visualization Platform Integration Requirements",
+  "description": "Machine-readable integration requirements for Sprint 2 deployment",
+  "version": "1.0.0",
+  "generated": "2025-11-17T00:00:00Z",
+
+  "environment": {
+    "node": {
+      "minimum": "18.0.0",
+      "recommended": "20.0.0"
+    },
+    "npm": {
+      "minimum": "9.0.0",
+      "recommended": "10.0.0"
+    },
+    "platforms": {
+      "supported": ["linux", "darwin", "win32"],
+      "tested": ["ubuntu-22.04", "macos-13", "windows-11"]
+    }
+  },
+
+  "dependencies": {
+    "production": {
+      "next": "^14.2.0",
+      "react": "^18.2.0",
+      "react-dom": "^18.2.0",
+      "typescript": "^5.0.0",
+      "@supabase/supabase-js": "^2.38.0",
+      "@supabase/auth-helpers-nextjs": "^0.8.7",
+      "molstar": "^4.0.0",
+      "zustand": "^4.4.0",
+      "@tanstack/react-query": "^5.0.0",
+      "idb": "^8.0.0",
+      "tailwindcss": "^3.4.0",
+      "recharts": "^2.10.0",
+      "react-hot-toast": "^2.4.1"
+    },
+    "development": {
+      "vitest": "^1.0.0",
+      "@vitest/ui": "^1.0.0",
+      "@vitest/coverage-v8": "^1.0.0",
+      "playwright": "^1.40.0",
+      "@testing-library/react": "^14.0.0",
+      "eslint": "^8.0.0",
+      "prettier": "^3.0.0",
+      "lighthouse": "^11.0.0"
+    }
+  },
+
+  "services": {
+    "supabase": {
+      "required": true,
+      "services": ["database", "storage", "realtime", "edge-functions", "auth"],
+      "minimumPlan": "free",
+      "recommendedPlan": "pro",
+      "limits": {
+        "free": {
+          "database": "500MB",
+          "storage": "1GB",
+          "bandwidth": "2GB/month",
+          "edgeFunctions": "500,000 invocations/month"
+        }
+      }
+    },
+    "vercel": {
+      "required": true,
+      "services": ["hosting", "edge-functions", "analytics", "kv-storage"],
+      "minimumPlan": "hobby",
+      "recommendedPlan": "pro",
+      "limits": {
+        "hobby": {
+          "bandwidth": "100GB/month",
+          "edgeFunctions": "100,000 invocations/month",
+          "kvStorage": "256MB"
+        }
+      }
+    },
+    "external": {
+      "rcsb-pdb": {
+        "required": true,
+        "rateLimit": "10 requests/second",
+        "fallbacks": ["pdbe", "pdbj"]
+      },
+      "alphafold-db": {
+        "required": false,
+        "rateLimit": "10 requests/second"
+      }
+    }
+  },
+
+  "database": {
+    "migrations": [
+      {
+        "id": "001",
+        "name": "base_schema",
+        "file": "supabase/migrations/001_base_schema.sql",
+        "tables": ["structures", "favorites", "user_preferences"],
+        "required": true
+      },
+      {
+        "id": "002",
+        "name": "md_jobs_schema",
+        "file": "supabase/migrations/002_md_jobs_schema.sql",
+        "tables": ["md_simulation_jobs"],
+        "required": true
+      },
+      {
+        "id": "003",
+        "name": "collaboration_schema",
+        "file": "supabase/migrations/003_collaboration_schema.sql",
+        "tables": ["collaboration_sessions", "collaboration_users", "annotations", "activity_feed", "camera_states"],
+        "required": true
+      },
+      {
+        "id": "004",
+        "name": "cache_analytics_schema",
+        "file": "supabase/migrations/004_cache_analytics_schema.sql",
+        "tables": ["cache_metadata"],
+        "required": false
+      }
+    ],
+    "expectedTables": 10,
+    "rlsEnabled": true,
+    "realtimeEnabled": ["collaboration_sessions", "collaboration_users", "annotations", "activity_feed", "camera_states"]
+  },
+
+  "storage": {
+    "buckets": [
+      {
+        "name": "trajectories",
+        "public": false,
+        "fileSizeLimit": "100MB",
+        "allowedMimeTypes": ["application/octet-stream", "text/plain"]
+      },
+      {
+        "name": "structures",
+        "public": true,
+        "fileSizeLimit": "50MB",
+        "allowedMimeTypes": ["chemical/x-pdb", "chemical/x-cif", "text/plain"]
+      },
+      {
+        "name": "exports",
+        "public": false,
+        "fileSizeLimit": "200MB",
+        "allowedMimeTypes": ["application/zip", "application/x-tar"]
+      },
+      {
+        "name": "avatars",
+        "public": true,
+        "fileSizeLimit": "2MB",
+        "allowedMimeTypes": ["image/jpeg", "image/png", "image/webp"]
+      }
+    ]
+  },
+
+  "environmentVariables": {
+    "required": [
+      "NEXT_PUBLIC_SUPABASE_URL",
+      "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+      "SUPABASE_SERVICE_ROLE_KEY",
+      "SUPABASE_JWT_SECRET",
+      "NEXT_PUBLIC_APP_URL"
+    ],
+    "optional": [
+      "RCSB_PDB_API_URL",
+      "PDBE_API_URL",
+      "PDBJ_API_URL",
+      "ALPHAFOLD_DB_API_URL",
+      "NEXT_PUBLIC_SENTRY_DSN",
+      "SENTRY_AUTH_TOKEN",
+      "NEXT_PUBLIC_WEB_VITALS_ENABLED",
+      "NEXT_PUBLIC_MONITORING_ENABLED"
+    ],
+    "featureFlags": [
+      "NEXT_PUBLIC_ENABLE_COLLABORATION",
+      "NEXT_PUBLIC_ENABLE_MD_SIMULATIONS",
+      "NEXT_PUBLIC_ENABLE_CACHE_WARMING",
+      "NEXT_PUBLIC_ENABLE_LOD_RENDERING",
+      "NEXT_PUBLIC_ENABLE_BROWSER_MD"
+    ]
+  },
+
+  "features": {
+    "molstar-viewer": {
+      "id": "feature-01",
+      "name": "Mol* Molecular Visualization",
+      "dependencies": ["molstar", "pdb-pipeline", "cache-service", "lod-manager"],
+      "requiredFiles": [
+        "src/services/molstar-service.ts",
+        "src/components/viewer/MolstarViewer.tsx",
+        "src/hooks/useMolstar.ts"
+      ],
+      "tests": "tests/unit/services/molstar-service.test.ts",
+      "criticalPath": true
+    },
+    "pdb-pipeline": {
+      "id": "feature-02",
+      "name": "PDB Data Fetching & Parsing",
+      "dependencies": ["cache-service", "external-apis"],
+      "requiredFiles": [
+        "src/services/pdb-fetcher.ts",
+        "src/lib/pdb-parser.ts",
+        "src/api/structures/[pdbId]/route.ts"
+      ],
+      "tests": "tests/unit/services/pdb-fetcher.test.ts",
+      "criticalPath": true
+    },
+    "viewer-ui": {
+      "id": "feature-03",
+      "name": "3D Viewer UI Components",
+      "dependencies": ["molstar-viewer", "state-store"],
+      "requiredFiles": [
+        "src/components/viewer/ViewerLayout.tsx",
+        "src/components/viewer/ViewerControls.tsx",
+        "src/components/viewer/ViewerToolbar.tsx"
+      ],
+      "tests": "tests/unit/components/viewer/",
+      "criticalPath": true
+    },
+    "cache-warming": {
+      "id": "feature-04",
+      "name": "Intelligent Cache Warming",
+      "dependencies": ["cache-service", "pdb-fetcher"],
+      "requiredFiles": [
+        "src/services/cache-warming.ts",
+        "src/workers/cache-warming.worker.ts",
+        "src/components/admin/CacheWarmingDashboard.tsx"
+      ],
+      "tests": "tests/unit/services/cache-warming.test.ts",
+      "criticalPath": false
+    },
+    "openmm-worker": {
+      "id": "feature-05",
+      "name": "OpenMM Edge Function",
+      "dependencies": ["job-queue", "supabase-edge-functions"],
+      "requiredFiles": [
+        "supabase/functions/md-simulation/index.ts",
+        "supabase/functions/md-simulation/Dockerfile",
+        "src/services/job-queue.ts"
+      ],
+      "tests": "tests/integration/openmm-worker.test.ts",
+      "criticalPath": true
+    },
+    "webdynamica": {
+      "id": "feature-06",
+      "name": "WebDynamica Browser MD",
+      "dependencies": ["browser-md-service"],
+      "requiredFiles": [
+        "src/lib/md-browser-dynamica.ts",
+        "src/services/browser-simulation.ts",
+        "src/components/simulation/SimulationControls.tsx"
+      ],
+      "tests": "tests/unit/lib/md-browser-dynamica.test.ts",
+      "criticalPath": false
+    },
+    "job-queue-ui": {
+      "id": "feature-07",
+      "name": "Job Queue UI Components",
+      "dependencies": ["job-queue", "supabase-realtime"],
+      "requiredFiles": [
+        "src/components/jobs/JobList.tsx",
+        "src/components/jobs/JobDetails.tsx",
+        "src/components/jobs/JobSubmissionForm.tsx"
+      ],
+      "tests": "tests/unit/components/jobs/",
+      "criticalPath": true
+    },
+    "collaboration": {
+      "id": "feature-08",
+      "name": "Real-Time Collaboration",
+      "dependencies": ["supabase-realtime", "collaboration-service"],
+      "requiredFiles": [
+        "src/services/collaboration-session.ts",
+        "src/services/camera-sync.ts",
+        "src/hooks/useCollaboration.ts"
+      ],
+      "tests": "tests/integration/collaboration.test.ts",
+      "criticalPath": false
+    },
+    "lod-rendering": {
+      "id": "feature-09",
+      "name": "Progressive LOD Rendering",
+      "dependencies": ["molstar-viewer", "quality-manager"],
+      "requiredFiles": [
+        "src/lib/lod-manager.ts",
+        "src/services/quality-manager.ts",
+        "src/lib/performance-profiler.ts"
+      ],
+      "tests": "tests/unit/lib/lod-manager.test.ts",
+      "criticalPath": true
+    }
+  },
+
+  "integrationPoints": [
+    {
+      "id": "integration-01",
+      "source": "pdb-fetcher",
+      "target": "cache-service",
+      "type": "data-flow",
+      "description": "PDB fetcher uses cache cascade (L1→L2→L3)",
+      "validation": "Cache hit/miss tracking functional"
+    },
+    {
+      "id": "integration-02",
+      "source": "cache-service",
+      "target": "indexeddb",
+      "type": "storage",
+      "description": "L1 cache uses IndexedDB",
+      "validation": "IndexedDB reads/writes working"
+    },
+    {
+      "id": "integration-03",
+      "source": "molstar-viewer",
+      "target": "pdb-data",
+      "type": "data-flow",
+      "description": "Mol* viewer loads structures from PDB pipeline",
+      "validation": "Structure displays in 3D"
+    },
+    {
+      "id": "integration-04",
+      "source": "viewer-ui",
+      "target": "molstar-service",
+      "type": "control",
+      "description": "UI controls manipulate Mol* viewer",
+      "validation": "Representation/color changes work"
+    },
+    {
+      "id": "integration-05",
+      "source": "job-queue",
+      "target": "openmm-worker",
+      "type": "rpc",
+      "description": "Job queue invokes OpenMM Edge Function",
+      "validation": "Jobs execute and complete"
+    },
+    {
+      "id": "integration-06",
+      "source": "collaboration",
+      "target": "supabase-realtime",
+      "type": "websocket",
+      "description": "Collaboration uses Realtime for sync",
+      "validation": "Multi-user cursor/annotation sync"
+    },
+    {
+      "id": "integration-07",
+      "source": "lod-manager",
+      "target": "molstar-renderer",
+      "type": "control",
+      "description": "LOD manager controls progressive loading",
+      "validation": "3-stage loading functional"
+    },
+    {
+      "id": "integration-08",
+      "source": "quality-manager",
+      "target": "performance-profiler",
+      "type": "data-flow",
+      "description": "Quality manager uses FPS data for auto-adjustment",
+      "validation": "Auto-quality adjustment working"
+    }
+  ],
+
+  "performance": {
+    "lighthouse": {
+      "performance": { "minimum": 90, "target": 95 },
+      "accessibility": { "minimum": 95, "target": 100 },
+      "bestPractices": { "minimum": 90, "target": 95 },
+      "seo": { "minimum": 90, "target": 95 }
+    },
+    "coreWebVitals": {
+      "lcp": { "good": 2500, "needsImprovement": 4000 },
+      "fid": { "good": 100, "needsImprovement": 300 },
+      "cls": { "good": 0.1, "needsImprovement": 0.25 }
+    },
+    "features": {
+      "structureLoad": {
+        "cacheHit": { "target": 50, "maximum": 100 },
+        "cacheMiss": { "target": 1500, "maximum": 2000 }
+      },
+      "rendering": {
+        "5kAtoms": { "target": 60, "minimum": 30 },
+        "50kAtoms": { "target": 30, "minimum": 15 }
+      },
+      "mdSimulation": {
+        "browser": { "target": 20000, "maximum": 30000 },
+        "serverless": { "target": 240000, "maximum": 300000 }
+      },
+      "collaboration": {
+        "cursorLatency": { "target": 100, "maximum": 200 },
+        "cameraSync": { "target": 200, "maximum": 500 }
+      },
+      "lod": {
+        "stage1": { "target": 200, "maximum": 500 },
+        "stage2": { "target": 1000, "maximum": 2000 },
+        "stage3": { "target": 3000, "maximum": 5000 }
+      }
+    }
+  },
+
+  "testing": {
+    "unit": {
+      "framework": "vitest",
+      "coverage": {
+        "overall": 85,
+        "criticalPaths": 95
+      },
+      "expectedTests": 170,
+      "timeout": 120000
+    },
+    "integration": {
+      "framework": "vitest",
+      "expectedTests": 10,
+      "timeout": 300000
+    },
+    "e2e": {
+      "framework": "playwright",
+      "browsers": ["chromium", "firefox", "webkit"],
+      "expectedTests": 20,
+      "timeout": 600000
+    },
+    "accessibility": {
+      "framework": "axe",
+      "standard": "WCAG21AA",
+      "expectedViolations": 0
+    }
+  },
+
+  "security": {
+    "vulnerabilities": {
+      "critical": 0,
+      "high": 0,
+      "medium": { "maximum": 5 },
+      "low": { "maximum": 10 }
+    },
+    "headers": {
+      "required": [
+        "Strict-Transport-Security",
+        "X-Frame-Options",
+        "X-Content-Type-Options",
+        "X-XSS-Protection",
+        "Content-Security-Policy"
+      ]
+    },
+    "rls": {
+      "enabled": true,
+      "tables": [
+        "favorites",
+        "user_preferences",
+        "md_simulation_jobs",
+        "collaboration_sessions",
+        "collaboration_users",
+        "annotations",
+        "activity_feed"
+      ]
+    }
+  },
+
+  "deployment": {
+    "stages": [
+      {
+        "name": "staging",
+        "branch": "staging/sprint-2-integration",
+        "url": "https://lab-visualizer-staging.vercel.app",
+        "autoDeployment": true,
+        "requiredChecks": ["tests", "lighthouse", "security-audit"]
+      },
+      {
+        "name": "production",
+        "branch": "main",
+        "url": "https://lab-visualizer.vercel.app",
+        "autoDeployment": true,
+        "requiredChecks": ["tests", "lighthouse", "security-audit", "staging-validation"],
+        "canary": {
+          "enabled": true,
+          "trafficPercentage": 10,
+          "duration": 86400
+        }
+      }
+    ],
+    "rollback": {
+      "automatic": {
+        "errorRate": 0.10,
+        "latencyP95": 10000
+      },
+      "manual": {
+        "errorRate": 0.05,
+        "latencyP95": 5000
+      }
+    }
+  },
+
+  "monitoring": {
+    "required": ["vercel-analytics", "web-vitals"],
+    "recommended": ["sentry", "custom-metrics"],
+    "alerts": {
+      "critical": {
+        "errorRate": 0.05,
+        "latencyP95": 5000,
+        "channels": ["pagerduty", "sms", "email"]
+      },
+      "warning": {
+        "errorRate": 0.02,
+        "latencyP95": 3000,
+        "cacheHitRate": 0.80,
+        "channels": ["slack", "email"]
+      }
+    }
+  },
+
+  "cost": {
+    "monthly": {
+      "target": 500,
+      "warning": 375,
+      "critical": 450
+    },
+    "perUser": {
+      "target": 0.10,
+      "maximum": 0.20
+    },
+    "breakdown": {
+      "vercel": { "estimate": 150, "maximum": 300 },
+      "supabase": { "estimate": 25, "maximum": 100 },
+      "simulations": { "estimate": 100, "maximum": 300 }
+    }
+  },
+
+  "validation": {
+    "preDeployment": [
+      "npm run typecheck",
+      "npm run lint",
+      "npm run test",
+      "npm run test:integration",
+      "npm run test:e2e",
+      "npm run lighthouse:ci",
+      "npm audit --production",
+      "npm run build"
+    ],
+    "postDeployment": [
+      "curl https://lab-visualizer.vercel.app/api/health",
+      "curl https://lab-visualizer.vercel.app/api/structures/1crn",
+      "lighthouse https://lab-visualizer.vercel.app",
+      "curl -I https://lab-visualizer.vercel.app"
+    ]
+  },
+
+  "documentation": {
+    "required": [
+      "docs/sprint2/INTEGRATION_SPECIFICATION.md",
+      "docs/sprint2/DEPLOYMENT_CHECKLIST.md",
+      "config/integration-requirements.json",
+      "scripts/validate-integration.ts"
+    ],
+    "recommended": [
+      "docs/guides/deployment-guide.md",
+      "docs/guides/troubleshooting.md",
+      "docs/api/api-reference.md"
+    ]
+  }
+}

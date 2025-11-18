@@ -1,59 +1,67 @@
-export type BodyPartCategory = 'head' | 'torso' | 'arms' | 'legs' | 'hands' | 'feet' | 'organs';
+/**
+ * Shared TypeScript types for the LAB Visualizer application
+ */
 
-export type DifficultyLevel = 'beginner' | 'intermediate' | 'advanced';
-
-export type LearningMode = 'study' | 'quiz' | 'challenge';
-
-export interface BodyPart {
-  id: string;
-  spanish: string;
-  english: string;
-  category: BodyPartCategory;
-  coordinates: {
-    x: number; // percentage
-    y: number; // percentage
-  };
-  difficulty: DifficultyLevel;
-  audioUrl?: string;
+/**
+ * Generic API response wrapper
+ */
+export interface ApiResponse<T = unknown> {
+  data?: T;
+  error?: string;
+  message?: string;
 }
 
-export interface UnsplashImage {
-  id: string;
-  urls: {
-    raw: string;
-    full: string;
-    regular: string;
-    small: string;
-    thumb: string;
-  };
-  alt_description: string | null;
-  user: {
-    name: string;
-    username: string;
-  };
-  links: {
-    html: string;
-  };
+/**
+ * Pagination metadata
+ */
+export interface PaginationMeta {
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  totalCount: number;
 }
 
-export interface QuizQuestion {
-  bodyPart: BodyPart;
-  options: string[];
-  correctAnswer: string;
+/**
+ * Paginated response
+ */
+export interface PaginatedResponse<T> extends ApiResponse<T[]> {
+  meta: PaginationMeta;
 }
 
-export interface UserProgress {
-  studiedParts: Set<string>;
-  quizScores: number[];
-  lastStudyDate: Date;
-  totalTimeSpent: number;
-  masteredParts: Set<string>;
+/**
+ * Sort direction
+ */
+export type SortDirection = 'asc' | 'desc';
+
+/**
+ * Sort options
+ */
+export interface SortOption {
+  field: string;
+  direction: SortDirection;
 }
 
-export interface AnnotationMarkerProps {
-  bodyPart: BodyPart;
-  isActive: boolean;
-  isRevealed?: boolean;
-  onClick?: () => void;
-  onHover?: (isHovering: boolean) => void;
+/**
+ * Filter operator types
+ */
+export type FilterOperator = 'eq' | 'ne' | 'gt' | 'gte' | 'lt' | 'lte' | 'like' | 'in';
+
+/**
+ * Filter option
+ */
+export interface FilterOption {
+  field: string;
+  operator: FilterOperator;
+  value: unknown;
+}
+
+/**
+ * Query parameters for data fetching
+ */
+export interface QueryParams {
+  page?: number;
+  pageSize?: number;
+  sort?: SortOption[];
+  filters?: FilterOption[];
+  search?: string;
 }

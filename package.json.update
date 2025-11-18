@@ -1,0 +1,2 @@
+Note: Add "molstar": "latest" to dependencies section
+Run: npm install molstar

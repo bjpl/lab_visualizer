@@ -1,0 +1,198 @@
+{
+  "audit_metadata": {
+    "date": "2025-11-17",
+    "version": "1.0.0",
+    "auditor": "Backend API Developer Agent",
+    "scope": ["API-1", "API-2", "API-3"],
+    "project": "LAB Visualizer"
+  },
+  "summary": {
+    "total_endpoints": 16,
+    "authenticated_endpoints": 9,
+    "public_endpoints": 7,
+    "edge_runtime_endpoints": 16,
+    "overall_score": "7/10",
+    "production_ready": false
+  },
+  "api_endpoints": {
+    "pdb_data": [
+      {"method": "GET", "path": "/api/pdb/[id]", "auth": false, "cache": "L2+L3", "rate_limit": "100/min", "tests": true},
+      {"method": "GET", "path": "/api/pdb/search", "auth": false, "cache": "L2-5min", "rate_limit": false, "tests": false},
+      {"method": "POST", "path": "/api/pdb/upload", "auth": false, "cache": false, "rate_limit": false, "tests": false},
+      {"method": "GET", "path": "/api/pdb/alphafold/[uniprot]", "auth": false, "cache": "L2+L3", "rate_limit": false, "tests": false}
+    ],
+    "export": [
+      {"method": "POST", "path": "/api/export/image", "auth": false, "formats": ["png", "jpg", "webp"], "tests": false},
+      {"method": "POST", "path": "/api/export/model", "auth": false, "formats": ["gltf", "obj", "stl"], "tests": false},
+      {"method": "POST", "path": "/api/export/pdf", "auth": false, "formats": ["pdf"], "tests": false, "note": "client-side-jsPDF"}
+    ],
+    "learning": [
+      {"method": "GET", "path": "/api/learning/modules", "auth": true, "tests": true},
+      {"method": "POST", "path": "/api/learning/modules", "auth": true, "tests": false},
+      {"method": "GET", "path": "/api/learning/modules/[id]", "auth": true, "tests": false},
+      {"method": "PUT", "path": "/api/learning/modules/[id]", "auth": true, "tests": false},
+      {"method": "DELETE", "path": "/api/learning/modules/[id]", "auth": true, "tests": false},
+      {"method": "GET", "path": "/api/learning/pathways", "auth": true, "tests": false},
+      {"method": "POST", "path": "/api/learning/pathways", "auth": true, "tests": false},
+      {"method": "GET", "path": "/api/learning/progress", "auth": true, "tests": false},
+      {"method": "POST", "path": "/api/learning/progress", "auth": true, "tests": false}
+    ]
+  },
+  "external_dependencies": {
+    "databases": {
+      "supabase": {
+        "services": ["auth", "database", "storage", "realtime"],
+        "tables": ["user_profiles", "learning_modules", "learning_pathways", "user_progress", "md_simulations", "simulation_jobs"],
+        "status": "active",
+        "criticality": "critical"
+      }
+    },
+    "third_party_apis": {
+      "rcsb_pdb": {
+        "url": "https://files.rcsb.org/download",
+        "rate_limit": "5_concurrent_200ms",
+        "fallback": ["pdbe", "pdbj"],
+        "status": "active",
+        "criticality": "high"
+      },
+      "pdbe": {
+        "url": "https://www.ebi.ac.uk/pdbe/entry-files/download",
+        "status": "active",
+        "criticality": "medium"
+      },
+      "pdbj": {
+        "url": "https://pdbj.org/rest/downloadPDBfile",
+        "status": "active",
+        "criticality": "medium"
+      },
+      "alphafold_db": {
+        "url": "https://alphafold.ebi.ac.uk/files",
+        "status": "active",
+        "criticality": "high"
+      }
+    },
+    "caching_layers": {
+      "l1_indexeddb": {"client_side": true, "ttl": "variable"},
+      "l2_vercel_kv": {"server_side": true, "ttl": "5min_to_7days"},
+      "l3_supabase_storage": {"server_side": true, "ttl": "30days_to_90days"}
+    }
+  },
+  "data_flow": {
+    "state_management": "zustand",
+    "persistence": "localStorage",
+    "realtime": "supabase_realtime",
+    "fetching_pattern": "CSR",
+    "streaming": "SSE",
+    "consistency_model": "eventual"
+  },
+  "issues": {
+    "critical": [
+      {
+        "id": "SEC-001",
+        "severity": "critical",
+        "category": "security",
+        "title": "Rate limiting only on 1/16 endpoints",
+        "description": "Only /api/pdb/[id] has rate limiting, and it's in-memory (resets on deploy)",
+        "recommendation": "Implement Redis/Vercel KV-based rate limiting on all public endpoints",
+        "effort": "medium",
+        "priority": 1
+      },
+      {
+        "id": "SEC-002",
+        "severity": "critical",
+        "category": "security",
+        "title": "No virus scanning on file uploads",
+        "description": "User-uploaded PDB files are not scanned for malware",
+        "recommendation": "Integrate ClamAV or similar virus scanning service",
+        "effort": "high",
+        "priority": 1
+      },
+      {
+        "id": "SEC-003",
+        "severity": "critical",
+        "category": "security",
+        "title": "Missing CSRF protection",
+        "description": "No CSRF tokens on mutating operations",
+        "recommendation": "Implement token-based CSRF for POST/PUT/DELETE operations",
+        "effort": "medium",
+        "priority": 1
+      }
+    ],
+    "high": [
+      {
+        "id": "DOC-001",
+        "severity": "high",
+        "category": "documentation",
+        "title": "No OpenAPI specification",
+        "description": "API lacks machine-readable documentation",
+        "recommendation": "Generate OpenAPI 3.1 spec from route handlers",
+        "effort": "medium",
+        "priority": 2
+      },
+      {
+        "id": "TEST-001",
+        "severity": "high",
+        "category": "testing",
+        "title": "Low test coverage (~25%)",
+        "description": "Most API routes lack integration tests",
+        "recommendation": "Write comprehensive tests, target 80% coverage",
+        "effort": "high",
+        "priority": 2
+      },
+      {
+        "id": "OBS-001",
+        "severity": "high",
+        "category": "observability",
+        "title": "No health check endpoints",
+        "description": "Cannot monitor service health programmatically",
+        "recommendation": "Add /api/health endpoints for monitoring",
+        "effort": "low",
+        "priority": 2
+      }
+    ],
+    "medium": [
+      {
+        "id": "PERF-001",
+        "severity": "medium",
+        "category": "performance",
+        "title": "PDB parsing blocks main thread",
+        "description": "Large PDB file parsing can freeze UI",
+        "recommendation": "Move parsing to Web Worker",
+        "effort": "medium",
+        "priority": 3
+      },
+      {
+        "id": "REL-001",
+        "severity": "medium",
+        "category": "reliability",
+        "title": "No external API monitoring",
+        "description": "No circuit breaker or health checks for external APIs",
+        "recommendation": "Implement service monitoring and circuit breaker pattern",
+        "effort": "medium",
+        "priority": 3
+      }
+    ]
+  },
+  "recommendations": {
+    "critical_timeline": "1-2 weeks",
+    "high_timeline": "2-4 weeks",
+    "medium_timeline": "4-8 weeks",
+    "next_audit": "Q2 2025"
+  },
+  "test_coverage": {
+    "endpoints_tested": 4,
+    "endpoints_total": 16,
+    "coverage_percent": 25,
+    "target_percent": 80
+  },
+  "security_posture": {
+    "authentication": "partial",
+    "authorization": "implemented",
+    "rate_limiting": "minimal",
+    "input_validation": "partial",
+    "cors": "not_configured",
+    "csrf": "not_implemented",
+    "api_keys": "managed",
+    "encryption": "https_only"
+  }
+}

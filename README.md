@@ -1,177 +1,116 @@
-# 🫀 Cuerpo Humano - Interactive Spanish Learning Platform
+# LAB Visualizer
 
-An elegant, modern web application for learning Spanish body part vocabulary through interactive image annotation and visual learning.
+Interactive data visualization and analytics platform built with Next.js 14, TypeScript, and Supabase.
 
-## ✨ Features
+## Tech Stack
 
-### 🎯 Three Learning Modes
+- **Framework**: Next.js 14+ (App Router)
+- **Language**: TypeScript (strict mode)
+- **Database**: Supabase
+- **State Management**: Zustand
+- **Styling**: Tailwind CSS
+- **Testing**: Vitest + Playwright
+- **Code Quality**: ESLint + Prettier
 
-1. **Study Mode**
-   - Explore labeled body parts at your own pace
-   - Filter by category (head, torso, arms, legs, etc.)
-   - Toggle labels on/off
-   - Click markers for detailed information
-
-2. **Quiz Mode**
-   - Test your knowledge interactively
-   - Click on body parts to answer questions
-   - Real-time feedback and scoring
-   - Track your accuracy
-
-3. **Challenge Mode**
-   - 60-second rapid-fire challenge
-   - Beat your high score
-   - Gamified learning experience
-   - Perfect for quick practice sessions
-
-### 🎨 Modern Design
-
-- **Sophisticated UI** with Tailwind CSS
-- **Dark Mode** support
-- **Smooth Animations** with Framer Motion
-- **Responsive Design** for all devices
-- **Progressive Web App** capabilities
-- **Accessibility** features built-in
-
-### 🖼️ Image Integration
-
-- High-quality anatomical images from Unsplash
-- Fallback images for demo mode
-- Multiple image perspectives
-
-### 📊 Progress Tracking
-
-- Persistent storage with Zustand
-- Track mastered vocabulary
-- Study time statistics
-- Quiz scores and accuracy
-
-## 🚀 Getting Started
+## Quick Start
 
 ### Prerequisites
 
-- Node.js 18+ and npm/yarn/pnpm
+- Node.js 18.17.0 or higher
+- npm 9.0.0 or higher
 
 ### Installation
 
-1. Clone the repository:
 ```bash
-git clone <repository-url>
-cd cuerpo_humano
-```
-
-2. Install dependencies:
-```bash
+# Install dependencies
 npm install
+
+# Copy environment variables
+cp .env.example .env.local
+
+# Configure Supabase credentials in .env.local
+# NEXT_PUBLIC_SUPABASE_URL=your-project-url
+# NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 ```
 
-3. (Optional) Configure Unsplash API:
-   - Copy `.env.example` to `.env`
-   - Get a free API key at [unsplash.com/developers](https://unsplash.com/developers)
-   - Add your key to `.env`:
-     ```
-     VITE_UNSPLASH_ACCESS_KEY=your_key_here
-     ```
+### Development
 
-4. Start the development server:
 ```bash
+# Start development server
 npm run dev
+
+# Run tests
+npm run test
+
+# Run E2E tests
+npm run test:e2e
+
+# Type checking
+npm run typecheck
+
+# Linting
+npm run lint
+
+# Format code
+npm run format
 ```
 
-5. Open [http://localhost:3000](http://localhost:3000)
+Open [http://localhost:3000](http://localhost:3000) to see your application.
 
-## 🏗️ Built With
-
-- **React 18** - UI framework
-- **TypeScript** - Type safety
-- **Vite** - Build tool
-- **Tailwind CSS** - Styling
-- **Framer Motion** - Animations
-- **Zustand** - State management
-- **Unsplash API** - High-quality images
-- **Vite PWA** - Progressive web app
-
-## 📁 Project Structure
+## Project Structure
 
 ```
-src/
-├── components/
-│   ├── annotation/
-│   │   ├── AnnotationMarker.tsx   # Interactive markers
-│   │   └── AnnotationLayer.tsx    # Annotation overlay
-│   ├── modes/
-│   │   ├── StudyMode.tsx          # Study interface
-│   │   ├── QuizMode.tsx           # Quiz interface
-│   │   └── ChallengeMode.tsx      # Challenge interface
-│   └── Header.tsx                  # App header
-├── data/
-│   └── bodyParts.ts               # Spanish vocabulary data
-├── services/
-│   └── unsplashApi.ts             # Image fetching
-├── store/
-│   └── useStore.ts                # Global state
-├── types/
-│   └── index.ts                   # TypeScript types
-├── App.tsx                         # Main app component
-├── main.tsx                        # Entry point
-└── index.css                       # Global styles
+lab_visualizer/
+├── src/
+│   ├── app/                 # Next.js App Router pages
+│   │   ├── layout.tsx      # Root layout
+│   │   ├── page.tsx        # Home page
+│   │   └── globals.css     # Global styles
+│   ├── components/         # React components
+│   ├── lib/                # Utility libraries
+│   │   └── supabase/       # Supabase clients
+│   ├── types/              # TypeScript types
+│   ├── config/             # App configuration
+│   ├── hooks/              # Custom React hooks
+│   ├── stores/             # Zustand stores
+│   └── tests/              # Test files
+│       ├── setup.ts        # Test setup
+│       └── e2e/            # E2E tests
+├── docs/                   # Documentation
+├── public/                 # Static assets
+└── config files           # ESLint, Prettier, etc.
 ```
 
-## 🎓 Vocabulary Included
+## Available Scripts
 
-The app includes 40+ Spanish body parts across categories:
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run start` - Start production server
+- `npm run test` - Run unit tests
+- `npm run test:ui` - Run tests with UI
+- `npm run test:coverage` - Generate coverage report
+- `npm run test:e2e` - Run E2E tests
+- `npm run lint` - Run ESLint
+- `npm run typecheck` - Run TypeScript compiler
+- `npm run format` - Format code with Prettier
 
-- **Head** - cabeza, ojos, nariz, boca, orejas, etc.
-- **Torso** - pecho, espalda, estómago, etc.
-- **Arms** - brazo, codo, muñeca, etc.
-- **Hands** - mano, dedos, pulgar, etc.
-- **Legs** - pierna, rodilla, tobillo, etc.
-- **Feet** - pie, dedos del pie, talón, etc.
-- **Organs** - corazón, cerebro, pulmones, etc.
+## Code Quality Standards
 
-## 🎯 SPARC Methodology
+- **TypeScript**: Strict mode enabled with comprehensive type checking
+- **Testing**: 80% coverage threshold for all code
+- **Performance**: Performance budgets enforced in Next.js config
+- **Security**: Security headers and best practices implemented
 
-This project was built following the SPARC framework:
+## Contributing
 
-- **S**pecification - Clear requirements and user stories
-- **P**seudocode - Logical flow planning
-- **A**rchitecture - Component hierarchy and data flow
-- **R**efinement - Performance and UX optimizations
-- **C**ompletion - Testing and quality metrics
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines and best practices.
 
-See [SPARC_SPEC.md](./SPARC_SPEC.md) for detailed documentation.
+## Documentation
 
-## 📦 Build for Production
+- [Local Development Setup](docs/setup/local-development.md)
+- [Architecture Decisions](docs/architecture/)
+- [Testing Guide](docs/testing/)
 
-```bash
-npm run build
-```
+## License
 
-The optimized build will be in the `dist/` folder.
-
-## 🌐 Deploy
-
-The app can be deployed to any static hosting service:
-
-- Vercel
-- Netlify
-- GitHub Pages
-- Cloudflare Pages
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## 📄 License
-
-MIT License - feel free to use this project for learning and teaching!
-
-## 🙏 Acknowledgments
-
-- Images from [Unsplash](https://unsplash.com)
-- Icons from [Lucide](https://lucide.dev)
-- Inspired by modern language learning platforms
-
----
-
-**¡Aprende español de manera divertida e interactiva!** 🎉
+Proprietary - All rights reserved

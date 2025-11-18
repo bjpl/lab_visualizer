@@ -1,0 +1,98 @@
+name: Lighthouse Performance
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main]
+
+jobs:
+  lighthouse:
+    name: Lighthouse CI
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build application
+        run: npm run build
+
+      - name: Run Lighthouse CI
+        uses: treosh/lighthouse-ci-action@v11
+        with:
+          urls: |
+            http://localhost:3000
+            http://localhost:3000/lab/1
+            http://localhost:3000/search
+          budgetPath: ./lighthouse-budget.json
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+
+      - name: Check performance budget
+        run: |
+          echo "Checking Lighthouse scores..."
+          # Performance budget enforced via lighthouse-budget.json
+
+      - name: Comment PR with results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const results = JSON.parse(fs.readFileSync('.lighthouseci/manifest.json', 'utf8'));
+            const summary = results.map(r => {
+              const scores = r.summary;
+              return `
+              ### 📊 Lighthouse Results for ${r.url}
+              - 🎯 Performance: ${scores.performance * 100}
+              - ♿ Accessibility: ${scores.accessibility * 100}
+              - ✅ Best Practices: ${scores['best-practices'] * 100}
+              - 🔍 SEO: ${scores.seo * 100}
+              `;
+            }).join('\n');
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: summary
+            });
+
+  web-vitals:
+    name: Web Vitals Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build with Web Vitals tracking
+        run: npm run build
+        env:
+          VITE_ENABLE_WEB_VITALS: true
+
+      - name: Analyze Web Vitals
+        run: |
+          npx unlighthouse --site http://localhost:3000 \
+            --build-static \
+            --output-path ./web-vitals-report
+
+      - name: Upload Web Vitals report
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-vitals-report
+          path: web-vitals-report/
+          retention-days: 30
