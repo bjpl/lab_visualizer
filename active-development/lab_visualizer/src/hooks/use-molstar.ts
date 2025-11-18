@@ -6,8 +6,10 @@
  */
 
 import { useEffect, useRef, useState, useCallback } from 'react';
+
 import { molstarService } from '@/services/molstar-service';
 import { useVisualization } from '@/stores/app-store';
+import type { RepresentationType, ColorScheme } from '@/stores/slices/visualization-slice';
 import type {
   MolstarConfig,
   MolstarRepresentationType,
@@ -16,7 +18,6 @@ import type {
   PerformanceMetrics,
   ExportImageOptions,
 } from '@/types/molstar';
-import type { RepresentationType, ColorScheme } from '@/stores/slices/visualization-slice';
 
 /**
  * Map app representation types to Mol* types

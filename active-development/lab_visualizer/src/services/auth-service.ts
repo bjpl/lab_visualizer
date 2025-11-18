@@ -3,7 +3,9 @@
  * Handles all authentication operations for LAB Visualization Platform
  */
 
-import { createClient, SupabaseClient, User, Session, AuthError } from '@supabase/supabase-js';
+import type { SupabaseClient, User, Session, AuthError } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js';
+
 import type { Database } from '@/types/database';
 
 interface SignUpData {

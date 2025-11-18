@@ -2,7 +2,8 @@
  * Collaboration session management service
  * Handles session creation, joining, and real-time synchronization via Supabase
  */
-import { RealtimeChannel } from '@supabase/supabase-js';
+import type { RealtimeChannel } from '@supabase/supabase-js';
+
 import { createClient } from '@/lib/supabase/client';
 import type {
   CollaborationSession,

@@ -5,9 +5,12 @@
  * Automatic cache-first strategy with optimistic updates
  */
 
-import { useQuery, useMutation, useQueryClient, UseQueryOptions, UseMutationOptions } from '@tanstack/react-query';
-import { getCacheService, CacheOptions } from '@/lib/cache/cache-service';
-import { PDBCacheData } from '@/lib/cache/indexeddb';
+import type { UseQueryOptions, UseMutationOptions } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
+import type { CacheOptions } from '@/lib/cache/cache-service';
+import { getCacheService } from '@/lib/cache/cache-service';
+import type { PDBCacheData } from '@/lib/cache/indexeddb';
 
 const cacheService = getCacheService();
 

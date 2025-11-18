@@ -7,13 +7,15 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+
+import type { SimulationFrame } from '../../lib/md-browser-dynamica';
+import type {
+  BrowserSimulationConfig,
+  SimulationState} from '../../services/browser-simulation';
 import {
   BrowserSimulationController,
-  createBrowserSimulation,
-  BrowserSimulationConfig,
-  SimulationState,
+  createBrowserSimulation
 } from '../../services/browser-simulation';
-import { SimulationFrame } from '../../lib/md-browser-dynamica';
 
 interface BrowserSimulationProps {
   atomCount: number;

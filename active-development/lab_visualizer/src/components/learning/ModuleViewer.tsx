@@ -1,13 +1,17 @@
 /**
  * ModuleViewer Component
  * Main component for displaying learning module content
+ *
+ * @security XSS Protection - All user-generated content is sanitized
  */
 
 'use client';
 
 import React, { useState, useEffect } from 'react';
+
 import { useLearningModule } from '@/hooks/use-learning';
 import type { ModuleContentData } from '@/types/learning';
+import { createSafeHTML } from '@/lib/sanitize';
 
 interface ModuleViewerProps {
   moduleId: string;
@@ -181,6 +185,8 @@ function VideoContent({ content, onProgress }: { content: Extract<ModuleContentD
 
 /**
  * Guide Content Component
+ *
+ * @security XSS Protection - User-generated section.content is sanitized before rendering
  */
 function GuideContent({ content }: { content: Extract<ModuleContentData, { type: 'guide' }> }) {
   return (
@@ -188,7 +194,8 @@ function GuideContent({ content }: { content: Extract<ModuleContentData, { type:
       {content.sections.sort((a, b) => a.order - b.order).map((section) => (
         <div key={section.id} className="mb-8">
           <h2>{section.title}</h2>
-          <div dangerouslySetInnerHTML={{ __html: section.content }} />
+          {/* Sanitized HTML rendering to prevent XSS attacks */}
+          <div {...createSafeHTML(section.content)} />
           {section.images && section.images.map((img, idx) => (
             <img key={idx} src={img} alt={`${section.title} image ${idx + 1}`} className="rounded-lg my-4" />
           ))}

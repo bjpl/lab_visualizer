@@ -3,11 +3,12 @@
  * Tier 2: Serverless OpenMM simulations via Supabase Edge Functions
  */
 
-import {
+import type {
   MDJob,
-  JobStatus,
   ServerlessMDConfig,
-  MDResult,
+  MDResult} from '../types/md-types';
+import {
+  JobStatus,
   MDTier
 } from '../types/md-types';
 

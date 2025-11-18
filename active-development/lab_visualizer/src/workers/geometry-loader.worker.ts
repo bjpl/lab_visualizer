@@ -4,7 +4,8 @@
  * Prevents main thread blocking during LOD transitions
  */
 
-import { LODLevel, RenderFeatures } from '../lib/lod-manager';
+import type { RenderFeatures } from '../lib/lod-manager';
+import { LODLevel } from '../lib/lod-manager';
 
 interface GeometryData {
   vertices: Float32Array;

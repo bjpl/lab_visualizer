@@ -6,7 +6,8 @@
 'use client';
 
 import React from 'react';
-import { BrowserSimulationConfig } from '../../services/browser-simulation';
+
+import type { BrowserSimulationConfig } from '../../services/browser-simulation';
 
 export interface SimulationPreset {
   id: string;

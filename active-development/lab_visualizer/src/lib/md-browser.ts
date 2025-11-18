@@ -3,7 +3,7 @@
  * Tier 1: Browser-based molecular dynamics (<500 atoms, <30s)
  */
 
-import { BrowserMDConfig, TrajectoryFrame, MDResult } from '../types/md-types';
+import type { BrowserMDConfig, TrajectoryFrame, MDResult } from '../types/md-types';
 
 export interface WebDynamicaOptions {
   containerId: string;

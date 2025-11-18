@@ -1,6 +1,10 @@
 'use client';
 
+import { Search, RotateCcw } from 'lucide-react';
 import React from 'react';
+
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -9,11 +13,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Search, RotateCcw } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 import { useVisualizationStore } from '@/lib/store/visualizationSlice';
 
 export function ControlsPanel() {

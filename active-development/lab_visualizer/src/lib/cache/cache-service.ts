@@ -7,7 +7,8 @@
  * Target: 30% L1 hit rate, <100ms L1 latency
  */
 
-import { getCache, PDBCacheData } from './indexeddb';
+import type { PDBCacheData } from './indexeddb';
+import { getCache } from './indexeddb';
 
 export interface CacheOptions {
   ttl?: number; // Time to live in milliseconds

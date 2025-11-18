@@ -13,20 +13,23 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { JobList } from '@/components/jobs/JobList';
+
+import { JobActions } from '@/components/jobs/JobActions';
 import { JobDetails } from '@/components/jobs/JobDetails';
+import { JobList } from '@/components/jobs/JobList';
 import { JobSubmissionForm } from '@/components/jobs/JobSubmissionForm';
 import { QueueStatus } from '@/components/jobs/QueueStatus';
-import { JobActions } from '@/components/jobs/JobActions';
 import { useJobQueue } from '@/hooks/useJobQueue';
 import { useJobSubscription } from '@/hooks/useJobSubscription';
 import { useStore } from '@/stores';
-import { MDJob, MDResult } from '@/types/md-types';
+import type { MDJob, MDResult } from '@/types/md-types';
+import { JobStatus } from '@/types/md-types';
+import type { QueueStatistics, JobSubmissionData } from '@/types/common';
 
 export default function JobsPage() {
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [showSubmitForm, setShowSubmitForm] = useState(false);
-  const [queueStats, setQueueStats] = useState<any>(null);
+  const [queueStats, setQueueStats] = useState<QueueStatistics | null>(null);
 
   const { submitJob, cancelJob, removeJob, retryJob, getQueueStats } = useJobQueue();
   const jobs = useStore((state) => Array.from(state.jobs.values()));
@@ -36,8 +39,22 @@ export default function JobsPage() {
   const mdJobs: MDJob[] = jobs.map((job) => ({
     id: job.id,
     userId: 'user-id', // TODO: Get from auth
-    status: job.status as any,
-    config: job.parameters as any,
+    status: (job.status as JobStatus) || JobStatus.PENDING,
+    config: {
+      tier: 'serverless' as const,
+      atomCount: 0,
+      timestep: 1,
+      totalTime: 100,
+      temperature: 300,
+      ensemble: 'NVT' as const,
+      integrator: 'verlet' as const,
+      outputFrequency: 10,
+      maxAtoms: 5000,
+      priority: 'normal' as const,
+      notifyOnComplete: true,
+      userId: 'user-id',
+      ...(typeof job.parameters === 'object' && job.parameters !== null ? job.parameters : {}),
+    } as MDJob['config'],
     structureId: job.name,
     structureData: '',
     createdAt: new Date(job.createdAt),
@@ -85,7 +102,7 @@ export default function JobsPage() {
     return () => clearInterval(interval);
   }, [getQueueStats]);
 
-  const handleJobSubmit = async (data: any) => {
+  const handleJobSubmit = async (data: JobSubmissionData) => {
     const job = await submitJob(data);
     if (job) {
       setShowSubmitForm(false);

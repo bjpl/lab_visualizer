@@ -5,8 +5,10 @@
 
 'use client';
 
-import React, { useState } from 'react';
 import Link from 'next/link';
+import type React from 'react';
+import { useState } from 'react';
+
 import { useAuth } from './AuthProvider';
 
 interface ResetPasswordProps {

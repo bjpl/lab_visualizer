@@ -4,6 +4,9 @@
  * Analyzes structure complexity and manages rendering stages
  */
 
+import { getComplexityAnalyzer } from './complexity-analyzer';
+import type { Atom, MolecularStructure, MolecularRenderer } from '@/types/molecular';
+
 export enum LODLevel {
   PREVIEW = 1,
   INTERACTIVE = 2,
@@ -125,29 +128,11 @@ export class LODManager {
 
   /**
    * Analyze structure complexity
+   * Uses centralized complexity analyzer for consistent calculations
    */
-  analyzeComplexity(structure: any): StructureComplexity {
-    const atomCount = structure.atomCount || 0;
-    const bondCount = structure.bondCount || 0;
-    const residueCount = structure.residueCount || 0;
-    const chainCount = structure.chainCount || 1;
-    const hasLigands = structure.hasLigands || false;
-    const hasSurfaces = structure.hasSurfaces || false;
-
-    // Estimate vertex count for rendering
-    // Rough estimate: 20 vertices per atom for sphere, 50 for surface
-    const estimatedVertices = atomCount * (hasSurfaces ? 50 : 20);
-
-    this.complexity = {
-      atomCount,
-      bondCount,
-      residueCount,
-      chainCount,
-      hasLigands,
-      hasSurfaces,
-      estimatedVertices,
-    };
-
+  analyzeComplexity(structure: MolecularStructure): StructureComplexity {
+    const analyzer = getComplexityAnalyzer();
+    this.complexity = analyzer.analyzeGenericStructure(structure);
     return this.complexity;
   }
 
@@ -184,10 +169,10 @@ export class LODManager {
    * Filter atoms based on LOD level
    */
   filterAtomsForLevel(
-    atoms: any[],
+    atoms: Atom[],
     level: LODLevel,
     complexity: StructureComplexity
-  ): any[] {
+  ): Atom[] {
     const config = this.getConfig(level);
 
     if (level === LODLevel.PREVIEW) {
@@ -205,7 +190,7 @@ export class LODManager {
   /**
    * Select backbone atoms (Cα, C, N, O)
    */
-  private selectBackboneAtoms(atoms: any[]): any[] {
+  private selectBackboneAtoms(atoms: Atom[]): Atom[] {
     const backboneNames = new Set(['CA', 'C', 'N', 'O']);
     return atoms.filter((atom) => backboneNames.has(atom.name));
   }
@@ -213,7 +198,7 @@ export class LODManager {
   /**
    * Select key atoms for structure representation
    */
-  private selectKeyAtoms(atoms: any[], complexity: StructureComplexity): any[] {
+  private selectKeyAtoms(atoms: Atom[], complexity: StructureComplexity): Atom[] {
     // Include backbone + Cβ for side chain indication
     const keyNames = new Set(['CA', 'C', 'N', 'O', 'CB']);
 
@@ -229,8 +214,8 @@ export class LODManager {
    * Progressive loading scheduler
    */
   async loadProgressive(
-    structure: any,
-    renderer: any,
+    structure: MolecularStructure,
+    renderer: MolecularRenderer,
     targetLevel: LODLevel = LODLevel.FULL
   ): Promise<LODStageResult[]> {
     this.abortController = new AbortController();
@@ -280,8 +265,8 @@ export class LODManager {
    * Load a single LOD stage
    */
   private async loadStage(
-    structure: any,
-    renderer: any,
+    structure: MolecularStructure,
+    renderer: MolecularRenderer,
     level: LODLevel,
     complexity: StructureComplexity
   ): Promise<LODStageResult> {
@@ -332,7 +317,7 @@ export class LODManager {
    * Measure average FPS over sample frames
    */
   private async measureFPS(
-    renderer: any,
+    renderer: MolecularRenderer,
     sampleFrames: number = 60
   ): Promise<number> {
     const frameTimes: number[] = [];
@@ -375,28 +360,47 @@ export class LODManager {
 
   /**
    * Calculate memory estimate for structure
+   * Uses centralized complexity analyzer for consistency
    */
   estimateMemoryUsage(complexity: StructureComplexity, level: LODLevel): number {
     const config = this.getConfig(level);
+    const analyzer = getComplexityAnalyzer();
+
+    // Scale atoms to render for this LOD level
     const atomsToRender = Math.min(complexity.atomCount, config.maxAtoms);
+    const renderRatio = atomsToRender / (complexity.atomCount || 1);
 
-    // Rough memory estimate
-    // - Geometry: 32 bytes per vertex * vertices per atom
-    // - Textures: additional 20%
-    // - Buffers: additional 10%
-    const verticesPerAtom = config.features.surfaces ? 50 : 20;
-    const geometryMemory = atomsToRender * verticesPerAtom * 32;
-    const totalMemory = geometryMemory * 1.3; // Add overhead
+    // Scale the complexity to this LOD level, but preserve the vertices-per-atom ratio
+    // from the input complexity (which may differ from config default)
+    const scaledComplexity: StructureComplexity = {
+      ...complexity,
+      atomCount: atomsToRender,
+      // Scale estimated vertices proportionally to atoms
+      estimatedVertices: Math.floor(complexity.estimatedVertices * renderRatio),
+    };
 
-    return totalMemory;
+    // Use analyzer for memory estimation
+    return analyzer.estimateMemoryUsage(scaledComplexity, 32);
   }
 
   /**
    * Check if memory budget allows level
+   * Uses centralized complexity analyzer for consistency
    */
   canAffordLevel(complexity: StructureComplexity, level: LODLevel): boolean {
-    const estimatedMemory = this.estimateMemoryUsage(complexity, level);
-    return estimatedMemory <= this.memoryBudget * 0.8; // Use 80% threshold
+    const config = this.getConfig(level);
+    const analyzer = getComplexityAnalyzer();
+    const atomsToRender = Math.min(complexity.atomCount, config.maxAtoms);
+    const renderRatio = atomsToRender / (complexity.atomCount || 1);
+
+    const scaledComplexity: StructureComplexity = {
+      ...complexity,
+      atomCount: atomsToRender,
+      // Scale estimated vertices proportionally to atoms
+      estimatedVertices: Math.floor(complexity.estimatedVertices * renderRatio),
+    };
+
+    return analyzer.canAffordComplexity(scaledComplexity, this.memoryBudget, 32, 0.8);
   }
 
   /**

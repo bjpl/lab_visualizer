@@ -7,7 +7,7 @@
  * - Results storage
  */
 
-import { StateCreator } from 'zustand';
+import type { StateCreator } from 'zustand';
 
 export type SimulationStatus =
   | 'pending'

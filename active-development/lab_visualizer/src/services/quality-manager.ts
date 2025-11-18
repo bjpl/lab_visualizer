@@ -4,7 +4,8 @@
  * Handles automatic degradation and upgrade based on performance
  */
 
-import { LODLevel, RenderFeatures } from '../lib/lod-manager';
+import type { RenderFeatures } from '../lib/lod-manager';
+import { LODLevel } from '../lib/lod-manager';
 
 export enum QualityLevel {
   LOW = 1,

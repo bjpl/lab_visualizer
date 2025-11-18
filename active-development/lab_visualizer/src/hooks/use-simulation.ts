@@ -3,14 +3,18 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+
 import { createClient } from '@/lib/supabase/client';
-import {
-  SimulationMonitor,
+import type {
   SimulationProgress,
   SimulationComplete,
   SimulationError
 } from '@/services/simulation-monitor';
-import { MDJob, JobStatus, ServerlessMDConfig } from '@/types/md-types';
+import {
+  SimulationMonitor
+} from '@/services/simulation-monitor';
+import type { MDJob, ServerlessMDConfig } from '@/types/md-types';
+import { JobStatus } from '@/types/md-types';
 
 export interface UseSimulationOptions {
   jobId: string;

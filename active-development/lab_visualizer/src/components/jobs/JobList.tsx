@@ -11,10 +11,12 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { MDJob, JobStatus } from '@/types/md-types';
+
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { JobStatus } from '@/types/md-types';
+import type { MDJob} from '@/types/md-types';
 
 export interface JobListProps {
   jobs: MDJob[];
@@ -73,13 +75,18 @@ export function JobList({ jobs, onJobSelect, selectedJobId }: JobListProps) {
 
     // Sort
     return [...filtered].sort((a, b) => {
-      let aVal: any = a[sortField];
-      let bVal: any = b[sortField];
+      let aVal: string | number | JobStatus | Date | undefined = a[sortField];
+      let bVal: string | number | JobStatus | Date | undefined = b[sortField];
 
       if (sortField === 'createdAt') {
         aVal = new Date(a.createdAt).getTime();
         bVal = new Date(b.createdAt).getTime();
       }
+
+      // Handle undefined values
+      if (aVal === undefined && bVal === undefined) return 0;
+      if (aVal === undefined) return 1;
+      if (bVal === undefined) return -1;
 
       if (aVal < bVal) return sortOrder === 'asc' ? -1 : 1;
       if (aVal > bVal) return sortOrder === 'asc' ? 1 : -1;

@@ -1,11 +1,13 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
 import { Search, Filter, X } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import React, { useState, useMemo } from 'react';
+
 import { StructureCard } from './StructureCard';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   POPULAR_STRUCTURES,
   CATEGORIES,

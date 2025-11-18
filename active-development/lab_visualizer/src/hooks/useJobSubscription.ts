@@ -10,6 +10,7 @@
  */
 
 import { useEffect, useRef, useCallback } from 'react';
+
 import { MDJob, JobStatus } from '@/types/md-types';
 
 export interface JobUpdate {

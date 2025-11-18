@@ -6,6 +6,7 @@
 'use client';
 
 import React, { useState } from 'react';
+
 import type { QuizContent, QuizQuestion } from '@/types/learning';
 
 interface QuizWidgetProps {

@@ -6,9 +6,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+
+import type { SimulationControls as ControlsState } from '../../types/simulation';
 import { Button } from '../ui/button';
 import { Card } from '../ui/card';
-import { SimulationControls as ControlsState } from '../../types/simulation';
 
 interface SimulationControlsProps {
   controls: ControlsState;

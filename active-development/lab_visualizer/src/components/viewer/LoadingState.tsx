@@ -1,7 +1,8 @@
 'use client';
 
-import React from 'react';
 import { Loader2, AlertTriangle, Beaker } from 'lucide-react';
+import React from 'react';
+
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 

@@ -1,9 +1,10 @@
 'use client';
 
-import React, { Suspense, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { ViewerLayout } from '@/components/viewer/ViewerLayout';
+import React, { Suspense, useEffect } from 'react';
+
 import { ViewerSkeleton } from '@/components/viewer/LoadingState';
+import { ViewerLayout } from '@/components/viewer/ViewerLayout';
 
 function ViewerContent() {
   const searchParams = useSearchParams();

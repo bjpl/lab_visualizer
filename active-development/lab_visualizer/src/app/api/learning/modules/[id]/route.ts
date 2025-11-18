@@ -5,7 +5,9 @@
  * DELETE /api/learning/modules/[id] - Delete module
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
+
 import { learningContentService } from '@/services/learning-content';
 import type { UpdateModuleRequest } from '@/types/learning';
 

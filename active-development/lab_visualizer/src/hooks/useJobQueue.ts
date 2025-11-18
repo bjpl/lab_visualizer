@@ -10,9 +10,11 @@
  */
 
 import { useState, useCallback } from 'react';
-import { jobQueue, JobSubmission } from '@/services/job-queue';
-import { MDJob, JobStatus } from '@/types/md-types';
+
+import type { JobSubmission } from '@/services/job-queue';
+import { jobQueue } from '@/services/job-queue';
 import { useStore } from '@/stores';
+import type { MDJob, JobStatus } from '@/types/md-types';
 
 export function useJobQueue() {
   const [isSubmitting, setIsSubmitting] = useState(false);

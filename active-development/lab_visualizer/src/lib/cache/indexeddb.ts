@@ -7,7 +7,8 @@
  * - Type-safe wrapper with metrics
  */
 
-import { openDB, DBSchema, IDBPDatabase } from 'idb';
+import type { DBSchema, IDBPDatabase } from 'idb';
+import { openDB } from 'idb';
 
 // Cache configuration constants
 export const CACHE_CONFIG = {

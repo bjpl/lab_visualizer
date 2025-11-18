@@ -4,7 +4,8 @@
  * Integrates with WebDynamica and prepares for MolStar rendering
  */
 
-import { createWebDynamicaEngine, WebDynamicaEngine, DynamicaConfig, SimulationFrame } from '../lib/md-browser-dynamica';
+import type { WebDynamicaEngine, DynamicaConfig, SimulationFrame } from '../lib/md-browser-dynamica';
+import { createWebDynamicaEngine } from '../lib/md-browser-dynamica';
 
 export interface ForceFieldParameters {
   bond: {

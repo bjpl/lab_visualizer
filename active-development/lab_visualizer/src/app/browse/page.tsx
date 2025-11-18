@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+
 import { StructureBrowser } from '@/components/browse/StructureBrowser';
 
 export const metadata: Metadata = {

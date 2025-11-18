@@ -5,9 +5,11 @@
 
 'use client';
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import type React from 'react';
+import { useState } from 'react';
+
 import { useAuth } from './AuthProvider';
 
 type UserRole = 'student' | 'educator' | 'researcher';
@@ -83,8 +85,9 @@ export default function SignupForm() {
       }
 
       setSuccess(true);
-    } catch (err: any) {
-      setError(err.message || 'An error occurred during sign up');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred during sign up';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

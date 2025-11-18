@@ -4,14 +4,16 @@
  */
 'use client';
 
-import React, { useEffect, useCallback, useRef } from 'react';
-import { MolecularViewer } from '@/components/MolecularViewer';
+import type React from 'react';
+import { useEffect, useCallback, useRef } from 'react';
+
 import { CursorOverlay } from '@/components/collaboration/CursorOverlay';
+import { MolecularViewer } from '@/components/MolecularViewer';
 import { useCollaboration, useCameraSync } from '@/hooks/use-collaboration';
-import { useCollaborationStore, selectCurrentSession } from '@/store/collaboration-slice';
 import { useMolstar } from '@/hooks/use-molstar';
-import type { MolstarConfig, CameraState as MolstarCameraState } from '@/types/molstar';
+import { useCollaborationStore, selectCurrentSession } from '@/store/collaboration-slice';
 import type { CameraState as CollabCameraState } from '@/types/collaboration';
+import type { MolstarConfig, CameraState as MolstarCameraState } from '@/types/molstar';
 
 export interface CollaborativeViewerProps {
   /**

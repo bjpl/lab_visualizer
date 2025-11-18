@@ -6,6 +6,7 @@
 'use client';
 
 import React from 'react';
+
 import { useLearningPathway } from '@/hooks/use-learning';
 import type { LearningModule } from '@/types/learning';
 

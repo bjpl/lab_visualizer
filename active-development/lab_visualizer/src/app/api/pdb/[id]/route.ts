@@ -3,10 +3,12 @@
  * Fetch PDB structure with multi-tier caching
  */
 
-import { NextRequest, NextResponse } from 'next/server';
-import { fetchPDB, isValidPDBId, normalizePDBId } from '@/services/pdb-fetcher';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
+
 import { parsePDB } from '@/lib/pdb-parser';
 import { cacheService } from '@/services/cache-service';
+import { fetchPDB, isValidPDBId, normalizePDBId } from '@/services/pdb-fetcher';
 
 export const runtime = 'edge';
 export const dynamic = 'force-dynamic';

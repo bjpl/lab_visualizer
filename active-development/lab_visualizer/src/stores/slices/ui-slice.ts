@@ -9,7 +9,7 @@
  * - Notifications
  */
 
-import { StateCreator } from 'zustand';
+import type { StateCreator } from 'zustand';
 
 export type Theme = 'light' | 'dark' | 'system';
 

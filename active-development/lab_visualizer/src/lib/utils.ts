@@ -41,8 +41,12 @@ export function formatDuration(ms: number): string {
 
 /**
  * Debounce function
+ * Generic function that debounces any callable function
+ * @template T - The function type to debounce
+ * @param func - The function to debounce
+ * @param wait - Milliseconds to wait before executing
  */
-export function debounce<T extends (...args: any[]) => any>(
+export function debounce<T extends (...args: never[]) => unknown>(
   func: T,
   wait: number
 ): (...args: Parameters<T>) => void {
@@ -55,8 +59,12 @@ export function debounce<T extends (...args: any[]) => any>(
 
 /**
  * Throttle function
+ * Generic function that throttles any callable function
+ * @template T - The function type to throttle
+ * @param func - The function to throttle
+ * @param limit - Minimum milliseconds between executions
  */
-export function throttle<T extends (...args: any[]) => any>(
+export function throttle<T extends (...args: never[]) => unknown>(
   func: T,
   limit: number
 ): (...args: Parameters<T>) => void {

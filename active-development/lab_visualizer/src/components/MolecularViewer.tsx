@@ -8,11 +8,13 @@
 
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import type React from 'react';
+import { useEffect, useState, useCallback } from 'react';
+
 import { useMolstar } from '@/hooks/use-molstar';
-import { useVisualization } from '@/stores/app-store';
 import { createMolstarLODBridge } from '@/services/molstar-lod-bridge';
-import type { MolstarConfig, LODLevel, LODProgressCallback } from '@/types/molstar';
+import { useVisualization } from '@/stores/app-store';
+import type { MolstarConfig, LODLevel, LODProgressCallback, StructureMetadata } from '@/types/molstar';
 
 /**
  * Component props
@@ -51,7 +53,7 @@ export interface MolecularViewerProps {
   /**
    * Callback when structure is loaded
    */
-  onStructureLoaded?: (metadata: any) => void;
+  onStructureLoaded?: (metadata: StructureMetadata) => void;
 
   /**
    * Callback when error occurs

@@ -6,20 +6,22 @@
 'use client';
 
 import React, { useState, useCallback, useEffect } from 'react';
-import { Card } from '../../components/ui/card';
-import SimulationPresets from '../../components/simulation/SimulationPresets';
-import SimulationControls from '../../components/simulation/SimulationControls';
-import ForceFieldSettings from '../../components/simulation/ForceFieldSettings';
-import EnergyPlot from '../../components/simulation/EnergyPlot';
+
 import BrowserSimulation from '../../components/simulation/BrowserSimulation';
-import {
+import EnergyPlot from '../../components/simulation/EnergyPlot';
+import ForceFieldSettings from '../../components/simulation/ForceFieldSettings';
+import SimulationControls from '../../components/simulation/SimulationControls';
+import SimulationPresets from '../../components/simulation/SimulationPresets';
+import { Card } from '../../components/ui/card';
+import type { SimulationFrame } from '../../lib/md-browser-dynamica';
+import type {
   SimulationPreset,
   SimulationControls as ControlsState,
   ForceFieldConfig,
-  EnergyPlotData,
+  EnergyPlotData} from '../../types/simulation';
+import {
   SIMULATION_PRESETS
 } from '../../types/simulation';
-import { SimulationFrame } from '../../lib/md-browser-dynamica';
 
 export default function SimulationPage() {
   // State

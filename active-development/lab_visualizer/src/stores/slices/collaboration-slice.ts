@@ -8,7 +8,7 @@
  * - Shared actions
  */
 
-import { StateCreator } from 'zustand';
+import type { StateCreator } from 'zustand';
 
 export interface User {
   id: string;

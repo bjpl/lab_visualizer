@@ -3,10 +3,12 @@
  * Fetch AlphaFold prediction by UniProt ID
  */
 
-import { NextRequest, NextResponse } from 'next/server';
-import { fetchAlphaFold, isValidUniProtId } from '@/services/pdb-fetcher';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
+
 import { parsePDB } from '@/lib/pdb-parser';
 import { cacheService } from '@/services/cache-service';
+import { fetchAlphaFold, isValidUniProtId } from '@/services/pdb-fetcher';
 
 export const runtime = 'edge';
 

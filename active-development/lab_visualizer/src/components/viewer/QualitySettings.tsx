@@ -3,12 +3,15 @@
  * Real-time quality controls with FPS display and performance stats
  */
 
-import React, { useState, useEffect } from 'react';
-import {
-  QualityLevel,
+import type React from 'react';
+import { useState, useEffect } from 'react';
+
+import type {
   QualityManager,
   PerformanceMetrics,
-  DeviceCapability,
+  DeviceCapability} from '../../services/quality-manager';
+import {
+  QualityLevel
 } from '../../services/quality-manager';
 
 interface QualitySettingsProps {

@@ -9,7 +9,7 @@
  * - Camera position
  */
 
-import { StateCreator } from 'zustand';
+import type { StateCreator } from 'zustand';
 
 export interface Structure {
   pdbId: string;

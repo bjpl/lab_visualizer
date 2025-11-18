@@ -2,11 +2,16 @@
  * API Route: Learning Progress Tracking
  * GET /api/learning/progress?contentId=[id] - Get user progress for content
  * POST /api/learning/progress - Update progress
+ *
+ * @security CSRF Protection - POST requests validate CSRF token
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
+
 import { learningContentService } from '@/services/learning-content';
 import type { UpdateProgressRequest } from '@/types/learning';
+import { validateCSRFToken } from '@/lib/csrf';
 
 export const dynamic = 'force-dynamic';
 
@@ -71,8 +76,25 @@ export async function GET(request: NextRequest) {
 /**
  * POST /api/learning/progress
  * Update user progress for a module
+ *
+ * @security CSRF Protection - Validates CSRF token
  */
 export async function POST(request: NextRequest) {
+  // CSRF Protection: Validate token before updating progress
+  const csrfValidation = await validateCSRFToken(request);
+  if (!csrfValidation.valid) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: {
+          code: 'CSRF_ERROR',
+          message: csrfValidation.error || 'Invalid CSRF token',
+        },
+      },
+      { status: 403 }
+    );
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const contentId = searchParams.get('contentId');

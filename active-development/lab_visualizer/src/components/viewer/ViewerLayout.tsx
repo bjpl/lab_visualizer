@@ -1,16 +1,18 @@
 'use client';
 
-import React, { useState } from 'react';
 import { Maximize2, Minimize2, PanelLeftClose, PanelLeftOpen, Users } from 'lucide-react';
+import React, { useState } from 'react';
+
+import { ControlsPanel } from './ControlsPanel';
+import { InfoPanel } from './InfoPanel';
+import { LoadingState } from './LoadingState';
+import { MolStarViewer } from './MolStarViewer';
+import { SelectionPanel } from './SelectionPanel';
+import { Toolbar } from './Toolbar';
+
+import { CollaborationPanel } from '@/components/collaboration/CollaborationPanel';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { MolStarViewer } from './MolStarViewer';
-import { ControlsPanel } from './ControlsPanel';
-import { Toolbar } from './Toolbar';
-import { InfoPanel } from './InfoPanel';
-import { SelectionPanel } from './SelectionPanel';
-import { LoadingState } from './LoadingState';
-import { CollaborationPanel } from '@/components/collaboration/CollaborationPanel';
 import { useCollaborationStore, selectCurrentSession } from '@/store/collaboration-slice';
 
 interface ViewerLayoutProps {

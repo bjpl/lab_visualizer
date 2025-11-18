@@ -4,7 +4,10 @@
  */
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { Check, Copy, Share2 } from 'lucide-react';
+import type React from 'react';
+import { useState, useEffect } from 'react';
+
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -16,7 +19,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useInviteLink } from '@/hooks/use-collaboration';
-import { Check, Copy, Share2 } from 'lucide-react';
+
 
 export interface InviteDialogProps {
   /**

@@ -5,16 +5,19 @@
 
 'use client';
 
-import React, { useState } from 'react';
-import {
+import type React from 'react';
+import { useState } from 'react';
+
+import type {
   ExportImageFormat,
   Export3DFormat,
-  ImageResolution,
   ImageExportOptions,
   Model3DExportOptions,
   PDFExportOptions,
   SessionExportOptions,
-  ExportProgress,
+  ExportProgress} from '../../types/export';
+import {
+  ImageResolution,
   RESOLUTION_MAP,
   DEFAULT_IMAGE_EXPORT_OPTIONS,
   DEFAULT_MODEL_EXPORT_OPTIONS,

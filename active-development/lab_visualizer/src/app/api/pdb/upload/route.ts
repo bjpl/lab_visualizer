@@ -1,16 +1,33 @@
 /**
  * API Route: POST /api/pdb/upload
  * Handle user PDB file uploads
+ *
+ * @security CSRF Protection - Validates CSRF token for all uploads
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
+
 import { parsePDB } from '@/lib/pdb-parser';
+import { validateCSRFToken } from '@/lib/csrf';
 
 export const runtime = 'edge';
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
 
 export async function POST(request: NextRequest) {
+  // CSRF Protection: Validate token before processing upload
+  const csrfValidation = await validateCSRFToken(request);
+  if (!csrfValidation.valid) {
+    return NextResponse.json(
+      {
+        error: 'CSRF validation failed',
+        message: csrfValidation.error || 'Invalid CSRF token',
+      },
+      { status: 403 }
+    );
+  }
+
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File;

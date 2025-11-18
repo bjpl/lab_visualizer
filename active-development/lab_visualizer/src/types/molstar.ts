@@ -4,7 +4,7 @@
  * Custom type definitions for Mol* integration with the LAB Visualizer
  */
 
-import { PluginContext } from 'molstar/lib/mol-plugin/context';
+import type { PluginContext } from 'molstar/lib/mol-plugin/context';
 import { StateTransformer } from 'molstar/lib/mol-state';
 
 /**

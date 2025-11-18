@@ -7,6 +7,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, useCallback } from 'react';
+
 import type { ParsedStructure } from '@/lib/pdb-parser';
 import type { PDBSearchResult } from '@/services/pdb-fetcher';
 

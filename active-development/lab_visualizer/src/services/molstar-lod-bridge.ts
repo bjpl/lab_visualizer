@@ -5,13 +5,15 @@
  * Coordinates quality levels, caching, and performance monitoring
  */
 
-import {
+import { getComplexityAnalyzer } from '@/lib/complexity-analyzer';
+import type {
   LODManager,
-  LODLevel,
   LODCallbacks,
   LODStageResult,
   StructureComplexity,
-  RenderFeatures,
+  RenderFeatures} from '@/lib/lod-manager';
+import {
+  LODLevel,
   createLODManager,
 } from '@/lib/lod-manager';
 import { molstarService } from '@/services/molstar-service';
@@ -151,33 +153,25 @@ export class MolstarLODBridge {
 
   /**
    * Analyze structure complexity from metadata
+   * Uses centralized complexity analyzer for consistent calculations
    */
   private analyzeFromMetadata(
     metadata: StructureMetadata
   ): StructureComplexity {
+    const analyzer = getComplexityAnalyzer();
     const { atomCount, residueCount, chains } = metadata;
 
-    // Estimate bond count (approximate: 1.5 bonds per atom)
-    const bondCount = Math.floor(atomCount * 1.5);
-
-    // Estimate if structure has ligands (heuristic: non-protein chains)
-    const hasLigands = chains.length > 1;
-
-    // Surfaces are expensive, assume false for now
-    const hasSurfaces = false;
-
-    // Estimate vertices for rendering
-    const estimatedVertices = atomCount * (hasSurfaces ? 50 : 20);
-
-    return {
-      atomCount,
-      bondCount,
-      residueCount,
-      chainCount: chains.length,
-      hasLigands,
-      hasSurfaces,
-      estimatedVertices,
-    };
+    // Use centralized analyzer with metadata
+    return analyzer.analyzeFromMetadata(
+      {
+        atomCount,
+        residueCount,
+        chains,
+        hasLigands: chains.length > 1, // Heuristic: non-protein chains
+        hasSurfaces: false, // Surfaces are expensive, assume false for now
+      },
+      false // hasSurfaces
+    );
   }
 
   /**

@@ -6,9 +6,11 @@
  * - Auto-dismiss with configurable duration
  * - Queue management
  * - Position control
+ * - XSS protection with automatic sanitization
  */
 
 import { useState, useCallback, useEffect } from 'react';
+import { sanitizeText } from '@/lib/sanitize';
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info';
 
@@ -165,6 +167,10 @@ function ToastItem({ toast, onDismiss }: {
     info: 'bg-blue-50 border-blue-200 text-blue-900',
   };
 
+  // Sanitize user-provided content to prevent XSS attacks
+  const safeTitle = sanitizeText(toast.title);
+  const safeMessage = toast.message ? sanitizeText(toast.message) : undefined;
+
   return (
     <div
       className={`pointer-events-auto border rounded-lg p-4 shadow-lg max-w-sm animate-in slide-in-from-right ${colors[toast.type]}`}
@@ -172,9 +178,9 @@ function ToastItem({ toast, onDismiss }: {
       <div className="flex items-start gap-3">
         <span className="text-xl">{icons[toast.type]}</span>
         <div className="flex-1 min-w-0">
-          <div className="font-medium">{toast.title}</div>
-          {toast.message && (
-            <div className="text-sm mt-1 opacity-90">{toast.message}</div>
+          <div className="font-medium">{safeTitle}</div>
+          {safeMessage && (
+            <div className="text-sm mt-1 opacity-90">{safeMessage}</div>
           )}
         </div>
         <button

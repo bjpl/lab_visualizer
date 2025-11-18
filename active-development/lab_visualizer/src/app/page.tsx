@@ -1,8 +1,9 @@
-import Link from 'next/link';
 import { ArrowRight, Beaker, Layers, Users, GraduationCap } from 'lucide-react';
+import Link from 'next/link';
+
+import { StructureCard } from '@/components/browse/StructureCard';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { StructureCard } from '@/components/browse/StructureCard';
 import { getRandomStructures } from '@/data/popular-structures';
 
 const features = [

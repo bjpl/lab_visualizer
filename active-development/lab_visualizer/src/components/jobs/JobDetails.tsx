@@ -13,11 +13,13 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { MDJob, JobStatus, MDResult } from '@/types/md-types';
+
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import type { MDJob, MDResult } from '@/types/md-types';
+import { JobStatus } from '@/types/md-types';
 
 export interface JobDetailsProps {
   job: MDJob;

@@ -2,11 +2,16 @@
  * API Route: Learning Modules List/Create
  * GET /api/learning/modules - List modules with filters
  * POST /api/learning/modules - Create new module
+ *
+ * @security CSRF Protection - POST requests validate CSRF token
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
+
 import { learningContentService } from '@/services/learning-content';
 import type { CreateModuleRequest, ListModulesFilters } from '@/types/learning';
+import { validateCSRFToken } from '@/lib/csrf';
 
 export const dynamic = 'force-dynamic';
 
@@ -62,8 +67,25 @@ export async function GET(request: NextRequest) {
 /**
  * POST /api/learning/modules
  * Create new learning module
+ *
+ * @security CSRF Protection - Validates CSRF token
  */
 export async function POST(request: NextRequest) {
+  // CSRF Protection: Validate token before creating module
+  const csrfValidation = await validateCSRFToken(request);
+  if (!csrfValidation.valid) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: {
+          code: 'CSRF_ERROR',
+          message: csrfValidation.error || 'Invalid CSRF token',
+        },
+      },
+      { status: 403 }
+    );
+  }
+
   try {
     const body: CreateModuleRequest = await request.json();
 

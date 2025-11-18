@@ -1,11 +1,12 @@
 'use client';
 
-import React from 'react';
+import { Eye, Download, BookOpen } from 'lucide-react';
 import Link from 'next/link';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import React from 'react';
+
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Eye, Download, BookOpen } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import type { PopularStructure } from '@/data/popular-structures';
 
 interface StructureCardProps {

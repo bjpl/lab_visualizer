@@ -266,16 +266,17 @@ describe('LODManager', () => {
 
     it('should return false for very large structures', () => {
       const complexity: StructureComplexity = {
-        atomCount: 100000,
+        atomCount: 100000, // At FULL LOD maxAtoms limit
         bondCount: 120000,
         residueCount: 10000,
         chainCount: 10,
         hasLigands: true,
         hasSurfaces: true,
-        estimatedVertices: 5000000,
+        estimatedVertices: 11324441, // Enough to exceed 80% of 512MB budget
       };
 
-      // With 512MB budget, this should exceed capacity
+      // With 512MB budget at 80% threshold (409.6MB), 11.3M vertices exceeds capacity
+      // Memory = 11.3M * 32 bytes * 1.3 = 471MB > 409.6MB
       expect(lodManager.canAffordLevel(complexity, LODLevel.FULL)).toBe(false);
     });
   });

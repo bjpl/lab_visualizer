@@ -4,14 +4,16 @@
  */
 'use client';
 
-import React, { useState } from 'react';
+import type React from 'react';
+import { useState } from 'react';
+
+import { collaborationSession } from '@/services/collaboration-session';
 import {
   useCollaborationStore,
   selectUsers,
   selectCurrentUser,
   selectIsOwner,
 } from '@/store/collaboration-slice';
-import { collaborationSession } from '@/services/collaboration-session';
 import type { CollaborationUser, UserRole } from '@/types/collaboration';
 
 interface UserPresenceProps {

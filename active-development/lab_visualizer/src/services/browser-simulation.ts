@@ -3,12 +3,13 @@
  * Manages WebDynamica simulations with safety limits and monitoring
  */
 
-import {
+import type {
   WebDynamicaEngine,
-  createWebDynamicaEngine,
   DynamicaConfig,
   SimulationFrame,
-  SimulationProgress,
+  SimulationProgress} from '../lib/md-browser-dynamica';
+import {
+  createWebDynamicaEngine
 } from '../lib/md-browser-dynamica';
 import { MDTier } from '../types/md-types';
 

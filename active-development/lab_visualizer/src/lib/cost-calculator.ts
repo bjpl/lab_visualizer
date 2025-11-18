@@ -6,6 +6,14 @@
  */
 
 import {
+  COST_BUDGETS,
+  VERCEL_PRICING,
+  SUPABASE_PRICING,
+  SIMULATION_PRICING,
+  OPTIMIZATION_THRESHOLDS,
+  GROWTH_PROJECTIONS,
+} from '../../config/cost-budgets';
+import type {
   CostSummary,
   CostTrend,
   CostProjection,
@@ -15,14 +23,6 @@ import {
   TimeRange,
   DateRange,
 } from '../types/cost-tracking';
-import {
-  COST_BUDGETS,
-  VERCEL_PRICING,
-  SUPABASE_PRICING,
-  SIMULATION_PRICING,
-  OPTIMIZATION_THRESHOLDS,
-  GROWTH_PROJECTIONS,
-} from '../../config/cost-budgets';
 
 /**
  * Calculate Vercel costs based on usage metrics
@@ -426,7 +426,7 @@ export function formatPercent(value: number, decimals: number = 1): string {
  */
 export function getDateRange(timeRange: TimeRange, customRange?: DateRange): DateRange {
   const end = new Date();
-  let start = new Date();
+  const start = new Date();
 
   switch (timeRange) {
     case '24h':

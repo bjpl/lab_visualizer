@@ -5,8 +5,20 @@
  * Displays Vercel, Supabase, and simulation costs with alerts and optimization recommendations.
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import type React from 'react';
+import { useState, useEffect, useCallback } from 'react';
+
+import { COST_BUDGETS } from '../../../config/cost-budgets';
 import {
+  generateCostAlerts,
+  generateOptimizationRecommendations,
+  calculateFeatureCosts,
+  projectCosts,
+  formatCurrency,
+  formatPercent,
+} from '../../lib/cost-calculator';
+import { costTrackingService } from '../../services/cost-tracking';
+import type {
   CostSummary,
   CostTrend,
   CostAlert,
@@ -16,16 +28,6 @@ import {
   PopularStructure,
   CostProjection,
 } from '../../types/cost-tracking';
-import { costTrackingService } from '../../services/cost-tracking';
-import {
-  generateCostAlerts,
-  generateOptimizationRecommendations,
-  calculateFeatureCosts,
-  projectCosts,
-  formatCurrency,
-  formatPercent,
-} from '../../lib/cost-calculator';
-import { COST_BUDGETS } from '../../../config/cost-budgets';
 
 interface CostDashboardProps {
   refreshInterval?: number; // milliseconds

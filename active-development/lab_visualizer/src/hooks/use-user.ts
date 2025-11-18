@@ -6,9 +6,12 @@
 'use client';
 
 import { useCallback } from 'react';
+
 import { useAuth } from './use-auth';
+
 import { authService } from '@/services/auth-service';
 import type { Database } from '@/types/database';
+import type { UserPreferences, NotificationSettings } from '@/types/user';
 
 type UserProfile = Database['public']['Tables']['user_profiles']['Row'];
 type UserProfileUpdate = Database['public']['Tables']['user_profiles']['Update'];
@@ -51,8 +54,8 @@ export function useUser() {
    * Update preferences
    */
   const updatePreferences = useCallback(
-    async (preferences: any) => {
-      return updateProfile({ preferences });
+    async (preferences: Partial<UserPreferences>) => {
+      return updateProfile({ preferences: preferences as Database['public']['Tables']['user_profiles']['Row']['preferences'] });
     },
     [updateProfile]
   );
@@ -61,8 +64,8 @@ export function useUser() {
    * Update notification settings
    */
   const updateNotificationSettings = useCallback(
-    async (notificationSettings: any) => {
-      return updateProfile({ notification_settings: notificationSettings });
+    async (notificationSettings: Partial<NotificationSettings>) => {
+      return updateProfile({ notification_settings: notificationSettings as Database['public']['Tables']['user_profiles']['Row']['notification_settings'] });
     },
     [updateProfile]
   );

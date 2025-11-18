@@ -6,7 +6,10 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import {
+
+import type { ExportableViewer } from '../services/export-service';
+import { exportService } from '../services/export-service';
+import type {
   ExportResult,
   ExportProgress,
   ImageExportOptions,
@@ -18,7 +21,6 @@ import {
   PDFExportResult,
   SessionExportResult
 } from '../types/export';
-import { exportService, ExportableViewer } from '../services/export-service';
 
 export interface UseExportOptions {
   viewer: ExportableViewer | null;

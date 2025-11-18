@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import { Menu, X, Beaker, Search, User, Settings } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, X, Beaker, Search, User, Settings } from 'lucide-react';
+import React, { useState } from 'react';
+
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 

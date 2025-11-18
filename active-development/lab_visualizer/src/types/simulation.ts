@@ -4,7 +4,8 @@
  */
 
 import { SimulationFrame } from '../lib/md-browser-dynamica';
-import { EnergyComponents, TrajectoryData } from '../services/md-simulation';
+import type { TrajectoryData } from '../services/md-simulation';
+import { EnergyComponents } from '../services/md-simulation';
 
 export interface SimulationPreset {
   id: string;

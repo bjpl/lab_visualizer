@@ -5,7 +5,8 @@
  * with priority queue, network awareness, and progress tracking.
  */
 
-import { CacheStrategyEngine, StructureMetadata, StructureScore } from '../lib/cache-strategy';
+import type { StructureMetadata, StructureScore } from '../lib/cache-strategy';
+import { CacheStrategyEngine } from '../lib/cache-strategy';
 
 export interface CacheWarmingConfig {
   enabled: boolean;

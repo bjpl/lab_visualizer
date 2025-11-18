@@ -12,10 +12,13 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { ServerlessMDConfig, MDTier } from '@/types/md-types';
+import type React from 'react';
+import { useState, useEffect } from 'react';
+
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import type { ServerlessMDConfig} from '@/types/md-types';
+import { MDTier } from '@/types/md-types';
 
 export interface JobSubmissionFormProps {
   onSubmit: (config: JobSubmissionData) => Promise<void>;

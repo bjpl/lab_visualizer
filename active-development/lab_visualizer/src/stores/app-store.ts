@@ -13,10 +13,14 @@ import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 
-import { VisualizationSlice, createVisualizationSlice } from './slices/visualization-slice';
-import { CollaborationSlice, createCollaborationSlice } from './slices/collaboration-slice';
-import { SimulationSlice, createSimulationSlice } from './slices/simulation-slice';
-import { UISlice, createUISlice } from './slices/ui-slice';
+import type { CollaborationSlice} from './slices/collaboration-slice';
+import { createCollaborationSlice } from './slices/collaboration-slice';
+import type { SimulationSlice} from './slices/simulation-slice';
+import { createSimulationSlice } from './slices/simulation-slice';
+import type { UISlice} from './slices/ui-slice';
+import { createUISlice } from './slices/ui-slice';
+import { createVisualizationSlice } from './slices/visualization-slice';
+import type { VisualizationSlice} from './slices/visualization-slice';
 
 /**
  * Combined application state

@@ -3,8 +3,9 @@
  * Tests LOD system across different device profiles and structure sizes
  */
 
-import { LODManager, LODLevel } from './lod-manager';
 import { QualityManager, QualityLevel } from '../services/quality-manager';
+
+import { LODManager, LODLevel } from './lod-manager';
 import { PerformanceProfiler } from './performance-profiler';
 
 export interface BenchmarkResult {

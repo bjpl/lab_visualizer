@@ -3,14 +3,12 @@
  * Handles exporting visualizations, 3D models, PDFs, and session state
  */
 
-import {
+import type {
   ExportImageFormat,
-  Export3DFormat,
   ImageExportOptions,
   Model3DExportOptions,
   PDFExportOptions,
   SessionExportOptions,
-  ExportResult,
   ImageExportResult,
   Model3DExportResult,
   PDFExportResult,
@@ -19,7 +17,10 @@ import {
   SessionStateData,
   ExportAnnotation,
   ExportCameraState,
-  ExportVisualizationSettings,
+  ExportVisualizationSettings} from '../types/export';
+import {
+  Export3DFormat,
+  ExportResult,
   RESOLUTION_MAP,
   ImageResolution,
   DEFAULT_IMAGE_EXPORT_OPTIONS,

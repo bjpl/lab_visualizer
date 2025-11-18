@@ -5,9 +5,10 @@
 'use client';
 
 import { useEffect, useCallback, useRef } from 'react';
-import { useCollaborationStore } from '@/store/collaboration-slice';
-import { collaborationSession } from '@/services/collaboration-session';
+
 import { cameraSync } from '@/services/camera-sync';
+import { collaborationSession } from '@/services/collaboration-session';
+import { useCollaborationStore } from '@/store/collaboration-slice';
 import type {
   CollaborationSession,
   CollaborationUser,

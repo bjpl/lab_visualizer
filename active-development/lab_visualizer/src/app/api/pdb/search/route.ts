@@ -3,9 +3,11 @@
  * Search PDB database
  */
 
-import { NextRequest, NextResponse } from 'next/server';
-import { searchPDB } from '@/services/pdb-fetcher';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
+
 import { cacheService } from '@/services/cache-service';
+import { searchPDB } from '@/services/pdb-fetcher';
 
 export const runtime = 'edge';
 

@@ -6,8 +6,9 @@
 'use client';
 
 import React from 'react';
+
+import type { ForceFieldConfig } from '../../types/simulation';
 import { Card } from '../ui/card';
-import { ForceFieldConfig } from '../../types/simulation';
 
 interface ForceFieldSettingsProps {
   config: ForceFieldConfig;

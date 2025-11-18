@@ -3,8 +3,10 @@
  * Handles server-side 3D model export operations
  */
 
-import { NextRequest, NextResponse } from 'next/server';
-import { Model3DExportOptions } from '@/types/export';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
+
+import type { Model3DExportOptions } from '@/types/export';
 
 export async function POST(request: NextRequest) {
   try {
@@ -85,7 +87,7 @@ export async function POST(request: NextRequest) {
 // Helper functions for format conversion
 
 function generateGLTF(
-  data: { vertices: number[]; normals: number[]; colors: number[]; indices: number[] },
+  _data: { vertices: number[]; normals: number[]; colors: number[]; indices: number[] },
   options: Model3DExportOptions
 ): string {
   const gltf = {

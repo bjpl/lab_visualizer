@@ -4,9 +4,11 @@
  */
 'use client';
 
-import React, { useEffect, useRef, useCallback } from 'react';
-import { useCollaborationStore, selectUsers } from '@/store/collaboration-slice';
+import type React from 'react';
+import { useEffect, useRef, useCallback } from 'react';
+
 import { collaborationSession } from '@/services/collaboration-session';
+import { useCollaborationStore, selectUsers } from '@/store/collaboration-slice';
 import type { CursorUpdate } from '@/types/collaboration';
 
 const CURSOR_UPDATE_THROTTLE = 100; // 10Hz

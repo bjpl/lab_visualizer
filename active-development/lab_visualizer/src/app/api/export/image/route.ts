@@ -3,8 +3,10 @@
  * Handles server-side image export operations
  */
 
-import { NextRequest, NextResponse } from 'next/server';
-import { ImageExportOptions } from '@/types/export';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
+
+import type { ImageExportOptions } from '@/types/export';
 
 export async function POST(request: NextRequest) {
   try {
@@ -44,7 +46,7 @@ export async function POST(request: NextRequest) {
     return new NextResponse(buffer, {
       status: 200,
       headers: {
-        'Content-Type': contentTypes[options.format],
+        'Content-Type': contentTypes[options.format] || 'application/octet-stream',
         'Content-Disposition': `attachment; filename="export.${options.format}"`,
         'Cache-Control': 'no-store'
       }

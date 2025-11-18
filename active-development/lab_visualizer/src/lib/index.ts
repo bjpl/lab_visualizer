@@ -3,6 +3,19 @@
  * Export all LOD-related functionality
  */
 
+// Complexity Analyzer
+export {
+  ComplexityAnalyzer,
+  getComplexityAnalyzer,
+  resetComplexityAnalyzer,
+  analyzeFromAtoms,
+  analyzeFromMetadata,
+  categorizeComplexity,
+  estimateMemoryUsage,
+  type ComplexityConfig,
+  type ExtendedComplexity,
+} from './complexity-analyzer';
+
 // Core LOD Manager
 export {
   LODManager,

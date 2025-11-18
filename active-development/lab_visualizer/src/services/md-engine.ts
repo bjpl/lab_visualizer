@@ -3,11 +3,12 @@
  * Routes simulations to appropriate tier based on requirements
  */
 
+import type {
+  MDValidation,
+  MDCapabilities} from '../types/md-types';
 import {
   MDTier,
   MDSimulationConfig,
-  MDValidation,
-  MDCapabilities,
   BrowserMDConfig,
   ServerlessMDConfig,
   DesktopExportConfig,

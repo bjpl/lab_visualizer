@@ -4,8 +4,9 @@
  * Offloads CPU-intensive force and energy calculations from main thread
  */
 
-import { createMDSimulation, MDSimulationParams, EnergyComponents } from '../services/md-simulation';
 import { SimulationFrame } from '../lib/md-browser-dynamica';
+import type { MDSimulationParams} from '../services/md-simulation';
+import { createMDSimulation, EnergyComponents } from '../services/md-simulation';
 
 interface WorkerMessage {
   type: 'initialize' | 'calculateEnergy' | 'minimize' | 'runSimulation' | 'stop';

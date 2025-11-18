@@ -6,12 +6,13 @@
  * and performance optimization.
  */
 
-import { createPluginUI } from 'molstar/lib/mol-plugin-ui';
-import { DefaultPluginUISpec, PluginUISpec } from 'molstar/lib/mol-plugin-ui/spec';
-import { PluginContext } from 'molstar/lib/mol-plugin/context';
 import { PluginCommands } from 'molstar/lib/mol-plugin/commands';
-import { StateTransforms } from 'molstar/lib/mol-plugin-state/transforms';
 import { PluginConfig } from 'molstar/lib/mol-plugin/config';
+import { PluginContext } from 'molstar/lib/mol-plugin/context';
+import { StateTransforms } from 'molstar/lib/mol-plugin-state/transforms';
+import { createPluginUI } from 'molstar/lib/mol-plugin-ui';
+import type { PluginUISpec } from 'molstar/lib/mol-plugin-ui/spec';
+import { DefaultPluginUISpec } from 'molstar/lib/mol-plugin-ui/spec';
 import 'molstar/lib/mol-plugin-ui/skin/light.scss';
 
 import type {

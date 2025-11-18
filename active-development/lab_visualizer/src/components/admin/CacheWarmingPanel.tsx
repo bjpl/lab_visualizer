@@ -4,7 +4,9 @@
  * Admin dashboard for managing and monitoring cache warming
  */
 
-import React, { useState, useEffect } from 'react';
+import type React from 'react';
+import { useState, useEffect } from 'react';
+
 import {
   useCacheWarming,
   useCacheProgress,

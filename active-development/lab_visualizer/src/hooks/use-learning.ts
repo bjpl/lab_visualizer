@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+
 import type {
   LearningModule,
   LearningPathway,
@@ -76,8 +77,9 @@ export function useLearningModules(filters?: ListModulesFilters): UseLearningMod
       }
 
       setModules(result.data);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      setError(errorMessage);
       console.error('Error fetching modules:', err);
     } finally {
       setLoading(false);
@@ -134,8 +136,9 @@ export function useLearningModule(moduleId: string | null): UseLearningModuleRet
       setProgress(result.data.userProgress || null);
       setReviews(result.data.reviews || []);
       setRelatedContent(result.data.relatedContent || []);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      setError(errorMessage);
       console.error('Error fetching module:', err);
     } finally {
       setLoading(false);
@@ -163,7 +166,7 @@ export function useLearningModule(moduleId: string | null): UseLearningModuleRet
       }
 
       setProgress(result.data);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error updating progress:', err);
       throw err;
     }
@@ -242,8 +245,9 @@ export function useLearningPathway(pathwayId: string | null): UseLearningPathway
         }
 
         setPathway(result.data);
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+        setError(errorMessage);
         console.error('Error fetching pathway:', err);
       } finally {
         setLoading(false);
@@ -300,8 +304,9 @@ export function useSearchLearning(query: string, filters?: ListModulesFilters) {
         }
 
         setResults(result.data);
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+        setError(errorMessage);
         console.error('Error searching learning content:', err);
       } finally {
         setLoading(false);

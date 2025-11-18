@@ -3,8 +3,9 @@
  * Real-time monitoring of MD simulations via Supabase Realtime
  */
 
+import type { RealtimeChannel } from '@supabase/supabase-js';
+
 import { createClient } from '@/lib/supabase/client';
-import { RealtimeChannel } from '@supabase/supabase-js';
 
 export interface SimulationProgress {
   jobId: string;

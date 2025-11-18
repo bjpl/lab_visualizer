@@ -4,11 +4,14 @@
  */
 'use client';
 
-import React, { useState } from 'react';
-import { CursorOverlay } from './CursorOverlay';
-import { AnnotationTools } from './AnnotationTools';
+import type React from 'react';
+import { useState } from 'react';
+
 import { ActivityFeed } from './ActivityFeed';
+import { AnnotationTools } from './AnnotationTools';
+import { CursorOverlay } from './CursorOverlay';
 import { UserPresence } from './UserPresence';
+
 import { useCollaboration, useCameraSync, useInviteLink } from '@/hooks/use-collaboration';
 import { useCollaborationStore, selectCurrentSession } from '@/store/collaboration-slice';
 

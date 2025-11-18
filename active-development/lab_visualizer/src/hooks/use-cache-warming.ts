@@ -5,12 +5,14 @@
  */
 
 import { useEffect, useState, useCallback, useRef } from 'react';
-import CacheWarmingService, {
+
+import { CacheStrategyEngine } from '../lib/cache-strategy';
+import type {
   CacheWarmingConfig,
   WarmingProgress,
   CacheWarmingEvent,
 } from '../services/cache-warming';
-import { CacheStrategyEngine } from '../lib/cache-strategy';
+import CacheWarmingService from '../services/cache-warming';
 
 /**
  * Hook for cache warming functionality

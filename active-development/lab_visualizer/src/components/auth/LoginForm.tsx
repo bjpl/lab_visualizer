@@ -5,9 +5,11 @@
 
 'use client';
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import type React from 'react';
+import { useState } from 'react';
+
 import { useAuth } from './AuthProvider';
 
 export default function LoginForm() {
@@ -38,8 +40,9 @@ export default function LoginForm() {
       const params = new URLSearchParams(window.location.search);
       const redirectTo = params.get('redirectTo') || '/dashboard';
       router.push(redirectTo);
-    } catch (err: any) {
-      setError(err.message || 'An error occurred during sign in');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred during sign in';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -59,8 +62,9 @@ export default function LoginForm() {
       }
 
       setMagicLinkSent(true);
-    } catch (err: any) {
-      setError(err.message || 'An error occurred sending magic link');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred sending magic link';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

@@ -4,14 +4,16 @@
  */
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import type React from 'react';
+import { useState, useCallback } from 'react';
+
+import { collaborationSession } from '@/services/collaboration-session';
 import {
   useCollaborationStore,
   selectAnnotations,
   selectCurrentUser,
   selectCanControl,
 } from '@/store/collaboration-slice';
-import { collaborationSession } from '@/services/collaboration-session';
 import type { Annotation } from '@/types/collaboration';
 
 interface AnnotationToolsProps {

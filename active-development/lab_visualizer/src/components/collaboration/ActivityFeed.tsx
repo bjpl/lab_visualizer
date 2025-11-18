@@ -4,7 +4,9 @@
  */
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import type React from 'react';
+import { useEffect, useRef, useState } from 'react';
+
 import { useCollaborationStore, selectActivities } from '@/store/collaboration-slice';
 import type { ActivityType } from '@/types/collaboration';
 

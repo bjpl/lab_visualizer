@@ -3,8 +3,10 @@
  * Handles server-side PDF generation
  */
 
-import { NextRequest, NextResponse } from 'next/server';
-import { PDFExportOptions } from '@/types/export';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
+
+import type { PDFExportOptions } from '@/types/export';
 
 export async function POST(request: NextRequest) {
   try {

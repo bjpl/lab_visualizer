@@ -10,6 +10,7 @@
  * - Search functionality
  */
 
+import { getComplexityAnalyzer } from '../lib/complexity-analyzer';
 import type {
   Structure,
   StructureMetadata,
@@ -321,26 +322,11 @@ class PDBServiceImpl implements IPDBService {
 
   /**
    * Analyze structure complexity for LOD decisions
+   * Uses centralized complexity analyzer
    */
   private analyzeComplexity(atoms: Atom[], metadata: StructureMetadata): StructureComplexity {
-    const ligandAtoms = atoms.filter((a) => a.isLigand);
-
-    // Rough estimate: 3-4 bonds per atom on average
-    const estimatedBonds = Math.floor(atoms.length * 3.5);
-
-    // Estimate vertices for rendering (depends on representation)
-    // Ball-and-stick: ~50 vertices per atom, cartoon: ~10 per residue
-    const estimatedVertices = atoms.length * 50 + metadata.residueCount * 10;
-
-    return {
-      atomCount: atoms.length,
-      bondCount: estimatedBonds,
-      residueCount: metadata.residueCount,
-      chainCount: metadata.chains.length,
-      hasLigands: ligandAtoms.length > 0,
-      hasSurfaces: false, // Would require surface calculation
-      estimatedVertices,
-    };
+    const analyzer = getComplexityAnalyzer();
+    return analyzer.analyzeFromAtoms(atoms, metadata);
   }
 
   /**

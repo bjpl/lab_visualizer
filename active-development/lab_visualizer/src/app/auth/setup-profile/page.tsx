@@ -5,8 +5,10 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import type React from 'react';
+import { useState, useEffect } from 'react';
+
 import { useAuth } from '@/hooks/use-auth';
 import { authService } from '@/services/auth-service';
 

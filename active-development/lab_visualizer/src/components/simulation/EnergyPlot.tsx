@@ -6,8 +6,9 @@
 'use client';
 
 import React, { useMemo } from 'react';
+
+import type { EnergyPlotData } from '../../types/simulation';
 import { Card } from '../ui/card';
-import { EnergyPlotData } from '../../types/simulation';
 
 interface EnergyPlotProps {
   data: EnergyPlotData;

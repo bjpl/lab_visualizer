@@ -3,10 +3,12 @@
  * Tier 3: Generate input files for GROMACS, NAMD, AMBER, LAMMPS
  */
 
-import {
-  ExportFormat,
+import type {
   DesktopExportConfig,
   MDSimulationConfig
+} from '../types/md-types';
+import {
+  ExportFormat
 } from '../types/md-types';
 
 export interface ExportResult {

@@ -3,7 +3,9 @@
  * Manages educational modules, pathways, and progress tracking
  */
 
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js';
+
 import type { Database } from '@/types/database';
 import type {
   ILearningService,

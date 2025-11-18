@@ -12,7 +12,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { MDJob, JobStatus } from '@/types/md-types';
+
+import type { MDJob} from '@/types/md-types';
+import { JobStatus } from '@/types/md-types';
 
 export interface JobActionsProps {
   job: MDJob;

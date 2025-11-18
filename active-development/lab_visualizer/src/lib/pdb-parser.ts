@@ -316,7 +316,7 @@ async function parseMMCIF(
 
   const lines = content.split('\n');
   let inAtomSite = false;
-  let columnMap: Map<string, number> = new Map();
+  const columnMap: Map<string, number> = new Map();
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();

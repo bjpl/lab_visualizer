@@ -2,8 +2,9 @@
  * Camera synchronization service for collaborative viewing
  * Handles leader-guided camera control and smooth transitions
  */
-import type { CameraState } from '@/types/collaboration';
 import { collaborationSession } from './collaboration-session';
+
+import type { CameraState } from '@/types/collaboration';
 
 const CAMERA_UPDATE_THROTTLE = 200; // 5Hz (200ms)
 const CAMERA_TRANSITION_DURATION = 300; // Smooth transition duration in ms

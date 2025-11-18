@@ -5,10 +5,13 @@
 
 'use client';
 
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { User, Session } from '@supabase/supabase-js';
+import type { User, Session } from '@supabase/supabase-js';
+import type React from 'react';
+import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+
 import { authService } from '@/services/auth-service';
 import type { Database } from '@/types/database';
+import type { AuthError, AuthResponse } from '@/types/auth';
 
 type UserProfile = Database['public']['Tables']['user_profiles']['Row'];
 
@@ -17,20 +20,20 @@ interface AuthContextType {
   session: Session | null;
   profile: UserProfile | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signIn: (email: string, password: string) => Promise<AuthResponse>;
   signUp: (data: {
     email: string;
     password: string;
     username: string;
     displayName: string;
     role?: 'student' | 'educator' | 'researcher';
-  }) => Promise<{ error: any }>;
+  }) => Promise<AuthResponse>;
   signOut: () => Promise<void>;
-  resetPassword: (email: string) => Promise<{ error: any }>;
-  updatePassword: (password: string) => Promise<{ error: any }>;
-  signInWithGoogle: () => Promise<{ error: any }>;
-  signInWithGithub: () => Promise<{ error: any }>;
-  signInWithMagicLink: (email: string) => Promise<{ error: any }>;
+  resetPassword: (email: string) => Promise<AuthResponse>;
+  updatePassword: (password: string) => Promise<AuthResponse>;
+  signInWithGoogle: () => Promise<AuthResponse>;
+  signInWithGithub: () => Promise<AuthResponse>;
+  signInWithMagicLink: (email: string) => Promise<AuthResponse>;
   refreshProfile: () => Promise<void>;
 }
 
