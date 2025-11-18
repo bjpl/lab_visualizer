@@ -2,238 +2,351 @@
 
 An elegant, ML-powered web application for learning Spanish color vocabulary through immersive, image-based experiences.
 
-## Features
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Next.js](https://img.shields.io/badge/Next.js-15-black)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)
+![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-green)
 
-- **Two Learning Levels**: Basic (12 colors) and Expanded (24+ colors)
+## ✨ Features
+
+### 🎨 Complete Learning Experience
+- **Two Learning Levels**: Basic (12 colors) and Expanded (24+ colors with variations)
 - **AI-Powered Annotations**: Claude Sonnet 4.5 generates contextual Spanish descriptions
 - **Beautiful Imagery**: High-quality images from Unsplash showcase colors in real-world contexts
-- **Spaced Repetition**: Intelligent review scheduling for optimal retention
-- **Interactive Quizzes**: Multiple question types to test comprehension
-- **Progress Tracking**: Monitor mastery levels and learning streaks
-- **Responsive Design**: Works beautifully on mobile, tablet, and desktop
+- **Interactive Learning Sessions**: Progress through colors with visual flashcards
+- **Audio Pronunciation**: Text-to-speech for proper Spanish pronunciation
 
-## Tech Stack
+### 🧠 Smart Learning System
+- **Spaced Repetition**: SM-2 algorithm for optimal review scheduling
+- **Mastery Tracking**: Individual progress for each color (0-100%)
+- **Adaptive Scheduling**: Review intervals adapt based on performance
+- **Streak Tracking**: Maintain daily learning streaks
+
+### 📝 Interactive Quizzes
+- **Multiple Question Types**:
+  - Image-to-text: "¿Qué color ves en esta imagen?"
+  - Text-to-image: "¿Cuál imagen muestra este color?"
+  - Phrase-match: Fill in the blank with color names
+- **Immediate Feedback**: Learn from mistakes with contextual explanations
+- **Score Tracking**: Monitor quiz performance over time
+
+### 📊 Progress Dashboard
+- **Mastery Levels**: Track basic and expanded vocabulary separately
+- **Learning Statistics**: Sessions completed, quizzes taken, average scores
+- **Achievement System**: Unlock badges for milestones
+- **Weak/Strong Analysis**: Identify colors needing more practice
+
+### 👨‍💼 Admin Panel
+- **Annotation Review**: Review and approve ML-generated content
+- **Quality Control**: Confidence scoring for AI annotations
+- **Analytics Dashboard**: System health and content statistics
+- **Bulk Actions**: Approve, reject, or edit annotations
+
+## 🏗️ Tech Stack
 
 ### Frontend
 - **Next.js 15** with App Router
 - **React 19** with TypeScript
 - **Tailwind CSS** + Shadcn UI for styling
-- **Framer Motion** for animations
+- **Framer Motion** for smooth animations
 - **Zustand** for state management
 
 ### Backend & Services
-- **Supabase**: PostgreSQL database, authentication, storage
-- **Anthropic Claude Sonnet 4.5**: ML-powered image annotation
-- **Unsplash API**: High-quality color imagery
-- **Vercel**: Frontend hosting and API routes
-- **Railway**: Background workers for ML processing
+- **Supabase**: PostgreSQL database, authentication, Row Level Security
+- **Anthropic Claude Sonnet 4.5**: ML-powered image annotation with Vision API
+- **Unsplash API**: High-quality, curated color imagery
+- **Vercel**: Edge functions, CDN, and hosting
+- **Railway**: Background workers for async ML processing
 
-## Project Structure
+### Architecture Highlights
+- **SPARC Methodology**: Properly specified, designed, and architected
+- **Server Components**: Optimal data fetching with React Server Components
+- **API Routes**: RESTful API design with Next.js Route Handlers
+- **Real-time Updates**: Supabase Realtime for live data
+- **Edge Optimization**: Vercel Edge Functions for image optimization
+
+## 📁 Project Structure
 
 ```
 colores/
-├── app/                      # Next.js App Router pages
-│   ├── api/                 # API routes
-│   ├── learn/               # Learning interface
-│   ├── quiz/                # Quiz interface
-│   ├── progress/            # Progress dashboard
-│   └── admin/               # Admin panel
+├── app/                          # Next.js App Router
+│   ├── page.tsx                 # Landing page
+│   ├── learn/                   # Learning interface
+│   │   ├── page.tsx            # Level selection
+│   │   └── [level]/            # Learning session
+│   ├── quiz/                    # Quiz system
+│   │   ├── page.tsx            # Quiz setup
+│   │   └── [quizId]/           # Active quiz
+│   ├── progress/                # Progress dashboard
+│   ├── admin/                   # Admin panel
+│   │   ├── annotations/        # Annotation review
+│   │   └── analytics/          # Analytics dashboard
+│   └── api/                     # API routes
+│       ├── colors/             # Color data
+│       ├── images/             # Image management
+│       ├── quiz/               # Quiz generation
+│       └── admin/              # Admin operations
 │
-├── components/              # React components
-│   ├── ui/                 # Shadcn UI components
-│   ├── learning/           # Learning-specific components
-│   ├── quiz/               # Quiz components
-│   └── admin/              # Admin components
+├── components/                   # React components
+│   ├── ui/                      # Shadcn UI primitives
+│   ├── learning/                # Learning components
+│   │   ├── ColorCard.tsx
+│   │   └── ProgressIndicator.tsx
+│   └── quiz/                    # Quiz components
 │
-├── lib/                     # Core libraries
-│   ├── supabase/           # Supabase clients
-│   ├── ai/                 # Claude AI integration
-│   ├── unsplash/           # Unsplash API client
-│   ├── learning/           # Learning algorithms
-│   └── utils/              # Utility functions
+├── lib/                         # Core libraries
+│   ├── supabase/               # Database clients
+│   │   ├── client.ts           # Browser client
+│   │   ├── server.ts           # Server client
+│   │   └── middleware.ts       # Auth middleware
+│   ├── ai/                      # AI integration
+│   │   └── claude.ts           # Claude API
+│   ├── unsplash/               # Image service
+│   │   ├── client.ts           # API client
+│   │   └── cache.ts            # Caching layer
+│   ├── learning/               # Learning algorithms
+│   │   ├── spaced-repetition.ts
+│   │   └── quiz-generator.ts
+│   └── utils/                   # Utilities
+│       ├── colors.ts           # Color helpers
+│       └── validation.ts       # Input validation
 │
-├── types/                   # TypeScript definitions
-├── supabase/               # Database migrations & seeds
-├── workers/                # Background processing workers
-└── public/                 # Static assets
+├── workers/                     # Background jobs
+│   └── annotation-processor.ts  # ML worker (Railway)
+│
+├── supabase/                    # Database
+│   ├── migrations/             # Schema migrations
+│   └── seed.sql                # Initial data (36 colors)
+│
+├── types/                       # TypeScript definitions
+│   ├── database.ts             # Database types
+│   ├── api.ts                  # API types
+│   └── supabase.ts             # Generated types
+│
+└── public/                      # Static assets
 ```
 
-## Getting Started
+## 🚀 Getting Started
 
 ### Prerequisites
 
-- Node.js 18+
-- npm or yarn
+- Node.js 18+ and npm
 - Supabase account
 - Anthropic API key
 - Unsplash API key
 
 ### Installation
 
-1. Clone the repository:
+1. **Clone the repository**
 ```bash
 git clone https://github.com/yourusername/colores.git
 cd colores
 ```
 
-2. Install dependencies:
+2. **Install dependencies**
 ```bash
 npm install
 ```
 
-3. Set up environment variables:
+3. **Set up environment variables**
 ```bash
 cp .env.local.example .env.local
 ```
 
-Edit `.env.local` with your credentials:
+Edit `.env.local`:
 ```env
 # Supabase
-NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+NEXT_PUBLIC_SUPABASE_URL=your-project-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 
 # Anthropic Claude
-ANTHROPIC_API_KEY=your-anthropic-api-key
+ANTHROPIC_API_KEY=your-anthropic-key
 
 # Unsplash
-UNSPLASH_ACCESS_KEY=your-unsplash-access-key
-UNSPLASH_SECRET_KEY=your-unsplash-secret-key
+UNSPLASH_ACCESS_KEY=your-access-key
+UNSPLASH_SECRET_KEY=your-secret-key
 
-# App URLs
+# App
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
-4. Set up Supabase database:
-```bash
-# Run migrations in Supabase dashboard or CLI
-# File: supabase/migrations/001_initial_schema.sql
+4. **Set up Supabase database**
 
-# Seed the database
-# File: supabase/seed.sql
+Run the migration in Supabase SQL Editor:
+```sql
+-- Copy and paste from: supabase/migrations/001_initial_schema.sql
 ```
 
-5. Run the development server:
+Seed the database:
+```sql
+-- Copy and paste from: supabase/seed.sql
+```
+
+5. **Run the development server**
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to see the app.
+Open [http://localhost:3000](http://localhost:3000)
 
-## Background Worker (Railway)
-
-The annotation processor runs as a background service on Railway:
-
-1. Create a new Railway project
-2. Add the following environment variables:
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `SUPABASE_SERVICE_ROLE_KEY`
-   - `ANTHROPIC_API_KEY`
-
-3. Deploy the worker:
+6. **Run the background worker (optional)**
 ```bash
-railway up
-```
-
-Or use the worker file directly:
-```bash
+# In a separate terminal
 npm run worker
 ```
 
-## Database Schema
-
-### Core Tables
-
-- **colors**: Color definitions (basic & expanded levels)
-- **images**: Cached Unsplash images
-- **annotations**: ML-generated Spanish descriptions
-- **user_progress**: Learning progress & mastery levels
-- **bookmarks**: User-saved images
-- **quiz_sessions**: Quiz history and scores
-- **learning_sessions**: Session tracking
-- **annotation_queue**: Background processing queue
-
-## SPARC Methodology
-
-This project was designed using the SPARC methodology:
-
-1. **Specification** (`SPARC-SPECIFICATION.md`): Requirements & features
-2. **Pseudocode** (`SPARC-PSEUDOCODE.md`): Core algorithm logic
-3. **Architecture** (`SPARC-ARCHITECTURE.md`): System design & data flows
-
-## Key Features Explained
+## 📚 Key Features Explained
 
 ### ML-Powered Annotation Workflow
 
-1. Images are fetched from Unsplash based on color queries
-2. Images are queued for annotation
-3. Background worker processes the queue using Claude Vision API
-4. Claude generates:
+1. **Image Fetching**: Images are fetched from Unsplash based on color queries
+2. **Queue System**: Images are added to annotation queue
+3. **Background Processing**: Railway worker processes queue using Claude Vision
+4. **AI Analysis**: Claude generates:
    - Spanish descriptions (basic & expanded)
-   - Contextual phrases
-   - Color analysis
-5. Annotations are saved and marked for admin review
-6. Approved annotations become available for learning
+   - Contextual example phrases
+   - Color analysis and confidence scores
+5. **Admin Review**: Annotations reviewed and approved before use
+6. **Learning Ready**: Approved content becomes available for learners
 
 ### Spaced Repetition Algorithm
 
-Based on SM-2 (SuperMemo 2):
-- Adapts review intervals based on mastery level
-- Increases intervals for correct answers
-- Resets to daily review for errors
-- Considers success rate and performance history
+Based on SuperMemo 2 (SM-2):
+- **Dynamic Intervals**: 1 day → 3 days → 1 week → 2 weeks → 1 month
+- **Mastery-Based**: Review frequency adapts to mastery level (0-100%)
+- **Performance Tracking**: Success rate influences scheduling
+- **Priority System**: Overdue and weak items prioritized
 
-### Quiz Generation
+### Quiz System
 
-Three question types:
-1. **Image-to-text**: "What color is this?"
-2. **Text-to-image**: "Which image shows this color?"
-3. **Phrase-match**: Fill in the blank with color name
+Three intelligent question types:
+1. **Image Recognition**: Identify color from image
+2. **Visual Matching**: Match color name to image
+3. **Contextual Usage**: Complete phrases with correct color
 
-## Deployment
+All questions generated dynamically from approved annotations.
 
-### Vercel (Frontend)
+## 🗄️ Database Schema
 
-```bash
-# Install Vercel CLI
-npm i -g vercel
+### Core Tables
 
-# Deploy
-vercel
+- **colors** (36 seeded colors)
+  - 12 basic: rojo, azul, amarillo, verde, etc.
+  - 24+ expanded: turquesa, coral, lavanda, etc.
+
+- **images** (Unsplash cache)
+  - Photographer attribution
+  - Color associations
+  - Approval status
+
+- **annotations** (ML-generated content)
+  - Spanish descriptions (2 levels)
+  - Example phrases
+  - Confidence scores
+  - Validation status
+
+- **user_progress** (Learning tracking)
+  - Mastery levels per color
+  - Review scheduling
+  - Performance history
+
+- **quiz_sessions** (Quiz history)
+  - Questions and answers
+  - Scores and completion
+
+## 🔧 API Routes
+
+### Public Endpoints
+
+```
+GET  /api/colors?level={basic|expanded}    # Get colors by level
+POST /api/images/fetch                      # Fetch images for color
+POST /api/quiz/generate                     # Generate new quiz
+GET  /api/quiz/[quizId]                    # Get quiz data
+POST /api/quiz/[quizId]/answer             # Submit answer
 ```
 
-Set environment variables in Vercel dashboard.
+### Admin Endpoints
 
-### Railway (Worker)
-
-Push to Railway or use CLI:
-```bash
-railway login
-railway link
-railway up
+```
+GET  /api/admin/annotations/pending         # Get pending annotations
+POST /api/admin/annotations/review          # Approve/reject annotations
 ```
 
-### Supabase
+## 📦 Deployment
 
-1. Create project at [supabase.com](https://supabase.com)
-2. Run migrations via SQL editor
-3. Enable Row Level Security (RLS)
-4. Configure authentication
+### Vercel (Frontend + API)
 
-## Contributing
+1. Connect GitHub repository
+2. Configure environment variables
+3. Deploy automatically on push
 
-Contributions are welcome! Please:
+See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed instructions.
+
+### Railway (Background Worker)
+
+1. Create new project
+2. Connect repository
+3. Set start command: `npm run worker`
+4. Add environment variables
+
+### Supabase (Database)
+
+1. Create project
+2. Run migrations in SQL Editor
+3. Seed initial data
+4. Configure Row Level Security
+
+## 🔒 Security
+
+- **Row Level Security**: All tables protected with RLS policies
+- **Authentication**: Supabase Auth with email/password
+- **API Validation**: Input sanitization and type checking
+- **Environment Variables**: Secrets never committed to git
+- **Rate Limiting**: Prevents API abuse
+
+## 🧪 Development
+
+### Scripts
+
+```bash
+npm run dev      # Start development server
+npm run build    # Build for production
+npm run start    # Start production server
+npm run lint     # Run ESLint
+npm run worker   # Run background worker
+```
+
+### Code Quality
+
+- TypeScript for type safety
+- ESLint for code quality
+- Prettier for formatting
+- Git hooks for pre-commit checks
+
+## 📖 Documentation
+
+- [SPARC-SPECIFICATION.md](SPARC-SPECIFICATION.md) - Requirements & design
+- [SPARC-PSEUDOCODE.md](SPARC-PSEUDOCODE.md) - Algorithm logic
+- [SPARC-ARCHITECTURE.md](SPARC-ARCHITECTURE.md) - System design
+- [DEPLOYMENT.md](DEPLOYMENT.md) - Deployment guide
+- [SETUP-PR.md](SETUP-PR.md) - Repository setup
+
+## 🤝 Contributing
+
+Contributions welcome! Please:
 
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
 4. Submit a pull request
 
-## License
+## 📝 License
 
 MIT License - see LICENSE file for details
 
-## Acknowledgments
+## 🙏 Acknowledgments
 
 - **Unsplash**: Beautiful, free imagery
 - **Anthropic**: Claude AI for intelligent annotations
@@ -241,10 +354,15 @@ MIT License - see LICENSE file for details
 - **Vercel**: Hosting and deployment
 - **Railway**: Background job processing
 
-## Support
+## 📧 Support
 
-For issues or questions, please [open an issue](https://github.com/yourusername/colores/issues) on GitHub.
+For issues or questions:
+- Open an issue on GitHub
+- Check existing documentation
+- Review deployment guides
 
 ---
 
-Built with ❤️ using SPARC methodology and modern web technologies.
+**Built with ❤️ using SPARC methodology and modern web technologies.**
+
+**Ready for production deployment!** 🚀
