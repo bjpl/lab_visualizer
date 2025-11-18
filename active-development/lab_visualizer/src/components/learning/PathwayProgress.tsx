@@ -5,8 +5,6 @@
 
 'use client';
 
-import React from 'react';
-
 import { useLearningPathway } from '@/hooks/use-learning';
 import type { LearningModule } from '@/types/learning';
 
@@ -71,6 +69,15 @@ export function PathwayProgress({ pathwayId, onModuleClick }: PathwayProgressPro
             <div
               key={module.id}
               onClick={() => onModuleClick?.(module)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onModuleClick?.(module);
+                }
+              }}
+              role="button"
+              tabIndex={0}
+              aria-label={`Module: ${module.title}${isCompleted ? ' (completed)' : isCurrent ? ' (current)' : ''}`}
               className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
                 isCompleted
                   ? 'border-green-500 bg-green-50'

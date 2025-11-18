@@ -5,7 +5,7 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { useLearningModules } from '@/hooks/use-learning';
 import type { LearningModule } from '@/types/learning';
@@ -60,6 +60,15 @@ export function ContentDrawer({ structureId, onModuleSelect, isOpen, onClose }: 
                 <div
                   key={module.id}
                   onClick={() => onModuleSelect?.(module)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      onModuleSelect?.(module);
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Select module: ${module.title}`}
                   className="p-3 border border-gray-200 rounded-lg hover:border-blue-500 cursor-pointer transition-colors"
                 >
                   <div className="flex items-start space-x-3">

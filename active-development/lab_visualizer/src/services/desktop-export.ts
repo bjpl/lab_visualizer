@@ -171,9 +171,9 @@ export class DesktopExportService {
    * Export AMBER simulation setup
    */
   private async exportAMBER(
-    structureData: string,
-    config: MDSimulationConfig,
-    exportConfig: DesktopExportConfig
+    _structureData: string,
+    _config: MDSimulationConfig,
+    _exportConfig: DesktopExportConfig
   ): Promise<ExportResult> {
     const files: ExportFile[] = [];
 
@@ -195,9 +195,9 @@ export class DesktopExportService {
    * Export LAMMPS simulation setup
    */
   private async exportLAMMPS(
-    structureData: string,
-    config: MDSimulationConfig,
-    exportConfig: DesktopExportConfig
+    _structureData: string,
+    _config: MDSimulationConfig,
+    _exportConfig: DesktopExportConfig
   ): Promise<ExportResult> {
     const files: ExportFile[] = [];
 
@@ -217,7 +217,7 @@ export class DesktopExportService {
 
   // Private helper methods - GROMACS
 
-  private convertPDBtoGRO(pdbData: string): string {
+  private convertPDBtoGRO(_pdbData: string): string {
     // TODO: Implement proper PDB to GRO conversion
     return `Generated GROMACS structure
     1

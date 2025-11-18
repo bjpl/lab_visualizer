@@ -5,8 +5,6 @@
 
 'use client';
 
-import React from 'react';
-
 import type { ForceFieldConfig } from '../../types/simulation';
 import { Card } from '../ui/card';
 
@@ -79,10 +77,10 @@ export default function ForceFieldSettings({
 
         {/* Force Field Type */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="force-field-type" className="block text-sm font-medium text-gray-700 mb-2">
             Force Field Type
           </label>
-          <div className="grid grid-cols-4 gap-2">
+          <div id="force-field-type" role="group" aria-label="Force field type selection" className="grid grid-cols-4 gap-2">
             {(['AMBER', 'CHARMM', 'OPLS', 'custom'] as const).map(type => (
               <button
                 key={type}

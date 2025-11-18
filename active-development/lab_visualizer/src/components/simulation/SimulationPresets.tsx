@@ -5,8 +5,6 @@
 
 'use client';
 
-import React from 'react';
-
 import type { BrowserSimulationConfig } from '../../services/browser-simulation';
 
 export interface SimulationPreset {
@@ -228,6 +226,16 @@ export default function SimulationPresets({
                 key={preset.id}
                 className="border border-gray-300 rounded-lg p-4 hover:border-blue-500 hover:shadow-md transition-all cursor-pointer"
                 onClick={() => !disabled && onSelectPreset(preset)}
+                onKeyDown={(e) => {
+                  if (!disabled && (e.key === 'Enter' || e.key === ' ')) {
+                    e.preventDefault();
+                    onSelectPreset(preset);
+                  }
+                }}
+                role="button"
+                tabIndex={disabled ? -1 : 0}
+                aria-label={`Load ${preset.name} preset - ${preset.difficulty} difficulty`}
+                aria-disabled={disabled}
               >
                 {/* Header */}
                 <div className="flex justify-between items-start mb-2">
@@ -298,19 +306,19 @@ export default function SimulationPresets({
         <h4 className="font-medium text-gray-900 mb-2">Learning Resources</h4>
         <ul className="text-sm text-blue-600 space-y-1">
           <li>
-            <a href="#" className="hover:underline">→ Introduction to Molecular Dynamics</a>
+            <button type="button" className="text-left hover:underline">→ Introduction to Molecular Dynamics</button>
           </li>
           <li>
-            <a href="#" className="hover:underline">→ Understanding Force Fields</a>
+            <button type="button" className="text-left hover:underline">→ Understanding Force Fields</button>
           </li>
           <li>
-            <a href="#" className="hover:underline">→ Statistical Ensembles (NVE, NVT, NPT)</a>
+            <button type="button" className="text-left hover:underline">→ Statistical Ensembles (NVE, NVT, NPT)</button>
           </li>
           <li>
-            <a href="#" className="hover:underline">→ Integration Algorithms Explained</a>
+            <button type="button" className="text-left hover:underline">→ Integration Algorithms Explained</button>
           </li>
           <li>
-            <a href="#" className="hover:underline">→ Analyzing MD Trajectories</a>
+            <button type="button" className="text-left hover:underline">→ Analyzing MD Trajectories</button>
           </li>
         </ul>
       </div>

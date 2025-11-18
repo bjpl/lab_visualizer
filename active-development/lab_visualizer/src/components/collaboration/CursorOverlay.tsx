@@ -87,7 +87,7 @@ export const CursorOverlay: React.FC = () => {
     const now = Date.now();
     let needsUpdate = false;
 
-    cursorsRef.current.forEach((cursor, userId) => {
+    cursorsRef.current.forEach((cursor, _userId) => {
       const timeSinceUpdate = now - cursor.lastUpdate;
       const alpha = Math.min(timeSinceUpdate / CURSOR_UPDATE_THROTTLE, 1);
 

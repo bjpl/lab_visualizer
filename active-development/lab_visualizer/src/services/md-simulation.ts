@@ -454,7 +454,7 @@ export class MDSimulationService {
     }
   }
 
-  private conjugateGradientStep(positions: Float32Array, forces: Float32Array, stepSize: number, iteration: number): void {
+  private conjugateGradientStep(positions: Float32Array, forces: Float32Array, stepSize: number, _iteration: number): void {
     // Simplified CG - would need to store previous gradient
     this.steepestDescentStep(positions, forces, stepSize);
   }

@@ -5,7 +5,7 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
 import type { SimulationControls as ControlsState } from '../../types/simulation';
 import { Button } from '../ui/button';

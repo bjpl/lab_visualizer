@@ -5,7 +5,7 @@
 
 'use client';
 
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 
 import type { EnergyPlotData } from '../../types/simulation';
 import { Card } from '../ui/card';
@@ -36,8 +36,8 @@ export default function EnergyPlot({
       return {
         xRange: [0, 1],
         yRange: [0, 1],
-        xScale: (x: number) => 0,
-        yScale: (y: number) => 0
+        xScale: (_x: number) => 0,
+        yScale: (_y: number) => 0
       };
     }
 

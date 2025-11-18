@@ -10,7 +10,7 @@
 
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -254,6 +254,15 @@ function JobListItem({ job, isSelected, onClick, formatDate, formatTimeRemaining
         isSelected ? 'bg-muted' : ''
       }`}
       onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClick();
+        }
+      }}
+      role="button"
+      tabIndex={0}
+      aria-label={`Job ${job.id} - ${job.status}`}
     >
       {/* Desktop view */}
       <div className="hidden md:grid md:grid-cols-[auto,1fr,auto,auto,auto] md:gap-4 md:items-center">

@@ -7,7 +7,7 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
 import { useLearningModule } from '@/hooks/use-learning';
 import type { ModuleContentData } from '@/types/learning';
@@ -164,6 +164,7 @@ function VideoContent({ content, onProgress }: { content: Extract<ModuleContentD
           onProgress?.(percent);
         }}
       >
+        <track kind="captions" srcLang="en" label="English" />
         Your browser does not support video playback.
       </video>
 
@@ -197,7 +198,7 @@ function GuideContent({ content }: { content: Extract<ModuleContentData, { type:
           {/* Sanitized HTML rendering to prevent XSS attacks */}
           <div {...createSafeHTML(section.content)} />
           {section.images && section.images.map((img, idx) => (
-            <img key={idx} src={img} alt={`${section.title} image ${idx + 1}`} className="rounded-lg my-4" />
+            <img key={idx} src={img} alt={`${section.title} illustration ${idx + 1}`} className="rounded-lg my-4" />
           ))}
         </div>
       ))}

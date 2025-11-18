@@ -185,10 +185,11 @@ const ImageExportForm: React.FC<ImageExportFormProps> = ({ options, onChange }) 
   return (
     <div className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label htmlFor="image-export-format" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           Format
         </label>
         <select
+          id="image-export-format"
           value={options.format}
           onChange={(e) => onChange({ ...options, format: e.target.value as ExportImageFormat })}
           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -200,10 +201,11 @@ const ImageExportForm: React.FC<ImageExportFormProps> = ({ options, onChange }) 
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label htmlFor="image-export-resolution" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           Resolution
         </label>
         <select
+          id="image-export-resolution"
           value={options.resolution}
           onChange={(e) => onChange({ ...options, resolution: e.target.value as ImageResolution })}
           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -219,10 +221,11 @@ const ImageExportForm: React.FC<ImageExportFormProps> = ({ options, onChange }) 
       {options.resolution === ImageResolution.CUSTOM && (
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label htmlFor="image-export-width" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Width
             </label>
             <input
+              id="image-export-width"
               type="number"
               value={options.customWidth || 1920}
               onChange={(e) => onChange({ ...options, customWidth: parseInt(e.target.value) })}
@@ -230,10 +233,11 @@ const ImageExportForm: React.FC<ImageExportFormProps> = ({ options, onChange }) 
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label htmlFor="image-export-height" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Height
             </label>
             <input
+              id="image-export-height"
               type="number"
               value={options.customHeight || 1080}
               onChange={(e) => onChange({ ...options, customHeight: parseInt(e.target.value) })}
@@ -313,10 +317,11 @@ const Model3DExportForm: React.FC<Model3DExportFormProps> = ({ options, onChange
   return (
     <div className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label htmlFor="model3d-export-format" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           Format
         </label>
         <select
+          id="model3d-export-format"
           value={options.format}
           onChange={(e) => onChange({ ...options, format: e.target.value as Export3DFormat })}
           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -424,10 +429,11 @@ const PDFExportForm: React.FC<PDFExportFormProps> = ({ options, onChange }) => {
   return (
     <div className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label htmlFor="pdf-export-title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           Title
         </label>
         <input
+          id="pdf-export-title"
           type="text"
           value={options.title}
           onChange={(e) => onChange({ ...options, title: e.target.value })}
@@ -436,10 +442,11 @@ const PDFExportForm: React.FC<PDFExportFormProps> = ({ options, onChange }) => {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label htmlFor="pdf-export-author" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           Author (optional)
         </label>
         <input
+          id="pdf-export-author"
           type="text"
           value={options.author || ''}
           onChange={(e) => onChange({ ...options, author: e.target.value })}
@@ -487,10 +494,11 @@ const PDFExportForm: React.FC<PDFExportFormProps> = ({ options, onChange }) => {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label htmlFor="pdf-export-pagesize" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           Page Size
         </label>
         <select
+          id="pdf-export-pagesize"
           value={options.pageSize}
           onChange={(e) => onChange({ ...options, pageSize: e.target.value as PDFExportOptions['pageSize'] })}
           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -502,10 +510,11 @@ const PDFExportForm: React.FC<PDFExportFormProps> = ({ options, onChange }) => {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label htmlFor="pdf-export-orientation" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           Orientation
         </label>
         <select
+          id="pdf-export-orientation"
           value={options.orientation}
           onChange={(e) => onChange({ ...options, orientation: e.target.value as PDFExportOptions['orientation'] })}
           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"

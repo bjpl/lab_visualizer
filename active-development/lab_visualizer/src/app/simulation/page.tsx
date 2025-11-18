@@ -5,7 +5,7 @@
 
 'use client';
 
-import React, { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 import BrowserSimulation from '../../components/simulation/BrowserSimulation';
 import EnergyPlot from '../../components/simulation/EnergyPlot';

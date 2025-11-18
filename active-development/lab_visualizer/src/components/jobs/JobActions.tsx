@@ -11,7 +11,7 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import type { MDJob} from '@/types/md-types';
 import { JobStatus } from '@/types/md-types';

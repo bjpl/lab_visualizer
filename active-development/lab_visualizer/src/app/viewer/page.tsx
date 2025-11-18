@@ -1,7 +1,7 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import React, { Suspense, useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 
 import { ViewerSkeleton } from '@/components/viewer/LoadingState';
 import { ViewerLayout } from '@/components/viewer/ViewerLayout';

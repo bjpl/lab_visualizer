@@ -267,6 +267,15 @@ export const AnnotationTools: React.FC<AnnotationToolsProps> = ({
                 <div
                   key={annotation.id}
                   onClick={() => handleSelectAnnotation(annotation.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleSelectAnnotation(annotation.id);
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Select annotation: ${annotation.type}`}
                   className={`p-3 cursor-pointer transition-colors ${
                     isSelected
                       ? 'bg-blue-50 dark:bg-blue-900/20'

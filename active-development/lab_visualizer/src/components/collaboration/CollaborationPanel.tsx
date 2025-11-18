@@ -164,10 +164,11 @@ export const CollaborationPanel: React.FC<CollaborationPanelProps> = ({
         {showCreateForm ? (
           <div className="p-4">
             <form onSubmit={handleCreateSession}>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label htmlFor="session-name-input" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Session Name
               </label>
               <input
+                id="session-name-input"
                 type="text"
                 value={sessionName}
                 onChange={(e) => setSessionName(e.target.value)}
@@ -197,10 +198,11 @@ export const CollaborationPanel: React.FC<CollaborationPanelProps> = ({
         ) : showJoinForm ? (
           <div className="p-4">
             <form onSubmit={handleJoinSession}>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label htmlFor="invite-code-input" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Invite Code
               </label>
               <input
+                id="invite-code-input"
                 type="text"
                 value={joinCode}
                 onChange={(e) => setJoinCode(e.target.value.toUpperCase())}

@@ -1,7 +1,7 @@
 'use client';
 
 import { Search, Filter, X } from 'lucide-react';
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 
 import { StructureCard } from './StructureCard';
 

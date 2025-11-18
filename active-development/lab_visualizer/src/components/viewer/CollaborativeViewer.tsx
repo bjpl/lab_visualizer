@@ -172,7 +172,7 @@ export const CollaborativeViewer: React.FC<CollaborativeViewerProps> = ({
     // Broadcast cursor position
     // This would use the collaboration service
     // collaborationSession.broadcast('cursor-move', { userId, x, y });
-  }, [session, userId]);
+  }, [session]);
 
   /**
    * Handle structure selection - broadcast to other users
@@ -183,7 +183,7 @@ export const CollaborativeViewer: React.FC<CollaborativeViewerProps> = ({
     // Broadcast selection to other users
     console.log('[CollaborativeViewer] Selection changed:', selection);
     // collaborationSession.broadcast('selection-change', { userId, selection });
-  }, [session, userId]);
+  }, [session]);
 
   /**
    * Handle structure loaded
@@ -202,7 +202,7 @@ export const CollaborativeViewer: React.FC<CollaborativeViewerProps> = ({
       //   message: `${userName} loaded structure ${pdbId}`,
       // });
     }
-  }, [session, userId, userName, pdbId, onStructureLoaded]);
+  }, [session, onStructureLoaded]);
 
   /**
    * Cleanup on unmount

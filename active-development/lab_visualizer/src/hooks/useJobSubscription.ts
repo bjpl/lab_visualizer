@@ -127,7 +127,7 @@ export function useJobSubscription(options: UseJobSubscriptionOptions) {
       setError(err instanceof Error ? err.message : 'Unknown error');
       scheduleReconnect();
     }
-  }, [enabled, jobId, userId, handleUpdate]);
+  }, [enabled, jobId, userId, scheduleReconnect]);
 
   const unsubscribe = useCallback(() => {
     if (subscriptionRef.current) {

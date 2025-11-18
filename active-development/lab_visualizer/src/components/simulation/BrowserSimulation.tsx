@@ -6,7 +6,7 @@
 
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 import type { SimulationFrame } from '../../lib/md-browser-dynamica';
 import type {
@@ -205,11 +205,12 @@ export default function BrowserSimulation({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
         {/* Temperature */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="simulation-temperature" className="block text-sm font-medium text-gray-700 mb-1">
             Temperature (K)
             <span className="ml-1 text-gray-500 cursor-help" title="Target temperature for the simulation. Controls molecular motion speed.">ⓘ</span>
           </label>
           <input
+            id="simulation-temperature"
             type="number"
             value={config.temperature}
             onChange={(e) => setConfig({ ...config, temperature: Number(e.target.value) })}
@@ -223,11 +224,12 @@ export default function BrowserSimulation({
 
         {/* Timestep */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="simulation-timestep" className="block text-sm font-medium text-gray-700 mb-1">
             Timestep (fs)
             <span className="ml-1 text-gray-500 cursor-help" title="Integration timestep. Smaller values are more accurate but slower.">ⓘ</span>
           </label>
           <input
+            id="simulation-timestep"
             type="number"
             value={config.timestep}
             onChange={(e) => setConfig({ ...config, timestep: Number(e.target.value) })}
@@ -241,11 +243,12 @@ export default function BrowserSimulation({
 
         {/* Steps */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="simulation-steps" className="block text-sm font-medium text-gray-700 mb-1">
             Steps
             <span className="ml-1 text-gray-500 cursor-help" title="Number of MD integration steps to perform.">ⓘ</span>
           </label>
           <input
+            id="simulation-steps"
             type="number"
             value={config.steps}
             onChange={(e) => setConfig({ ...config, steps: Number(e.target.value) })}
@@ -259,11 +262,12 @@ export default function BrowserSimulation({
 
         {/* Integrator */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="simulation-integrator" className="block text-sm font-medium text-gray-700 mb-1">
             Integrator
             <span className="ml-1 text-gray-500 cursor-help" title="Integration algorithm. Verlet is fastest, Langevin includes temperature control.">ⓘ</span>
           </label>
           <select
+            id="simulation-integrator"
             value={config.integrator}
             onChange={(e) => setConfig({ ...config, integrator: e.target.value as any })}
             disabled={simState.isRunning}
@@ -277,11 +281,12 @@ export default function BrowserSimulation({
 
         {/* Force Field */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="simulation-forcefield" className="block text-sm font-medium text-gray-700 mb-1">
             Force Field
             <span className="ml-1 text-gray-500 cursor-help" title="Molecular force field for interactions.">ⓘ</span>
           </label>
           <select
+            id="simulation-forcefield"
             value={config.forceField}
             onChange={(e) => setConfig({ ...config, forceField: e.target.value as any })}
             disabled={simState.isRunning}
@@ -295,11 +300,12 @@ export default function BrowserSimulation({
 
         {/* Ensemble */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="simulation-ensemble" className="block text-sm font-medium text-gray-700 mb-1">
             Ensemble
             <span className="ml-1 text-gray-500 cursor-help" title="Statistical ensemble. NVT = constant temperature, NVE = constant energy.">ⓘ</span>
           </label>
           <select
+            id="simulation-ensemble"
             value={config.ensemble}
             onChange={(e) => setConfig({ ...config, ensemble: e.target.value as any })}
             disabled={simState.isRunning}

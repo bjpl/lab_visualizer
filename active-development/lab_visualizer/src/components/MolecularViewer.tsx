@@ -183,7 +183,7 @@ export const MolecularViewer: React.FC<MolecularViewerProps> = ({
     };
 
     loadData();
-  }, [isReady, pdbId, pdbData, enableLOD]);
+  }, [isReady, pdbId, pdbData, enableLOD, loadStructure, loadStructureById, lodBridge, onError]);
 
   /**
    * Load structure from Zustand store with optional LOD
@@ -226,7 +226,7 @@ export const MolecularViewer: React.FC<MolecularViewerProps> = ({
     };
 
     loadFromStore();
-  }, [isReady, structure, pdbId, pdbData, enableLOD]);
+  }, [isReady, structure, pdbId, pdbData, enableLOD, loadStructure, loadStructureById, lodBridge, onError]);
 
   /**
    * Notify parent of structure load

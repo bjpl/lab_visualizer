@@ -1,7 +1,7 @@
 'use client';
 
 import { Maximize2, Minimize2, PanelLeftClose, PanelLeftOpen, Users } from 'lucide-react';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { ControlsPanel } from './ControlsPanel';
 import { InfoPanel } from './InfoPanel';

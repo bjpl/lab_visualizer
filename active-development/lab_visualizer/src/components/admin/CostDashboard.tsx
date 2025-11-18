@@ -191,6 +191,15 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({
                 key={alert.id}
                 className={`alert alert-${alert.severity}`}
                 onClick={() => onAlertClick?.(alert)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onAlertClick?.(alert);
+                  }
+                }}
+                role="button"
+                tabIndex={0}
+                aria-label={`${alert.severity} alert: ${alert.category}`}
               >
                 <div className="alert-icon">
                   {alert.severity === 'critical' ? '🔴' : '⚠️'}
@@ -385,6 +394,15 @@ export const CostDashboard: React.FC<CostDashboardProps> = ({
                 key={rec.id}
                 className={`recommendation priority-${rec.priority}`}
                 onClick={() => onRecommendationClick?.(rec)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onRecommendationClick?.(rec);
+                  }
+                }}
+                role="button"
+                tabIndex={0}
+                aria-label={`${rec.priority} priority recommendation: ${rec.title}`}
               >
                 <div className="rec-header">
                   <h3>{rec.title}</h3>

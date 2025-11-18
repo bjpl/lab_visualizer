@@ -240,8 +240,8 @@ export function JobSubmissionForm({
 
             {/* Ensemble */}
             <div>
-              <label className="text-sm font-medium mb-2 block">Ensemble</label>
-              <div className="grid grid-cols-3 gap-2">
+              <label htmlFor="ensemble-select" className="text-sm font-medium mb-2 block">Ensemble</label>
+              <div id="ensemble-select" role="group" aria-label="Ensemble selection" className="grid grid-cols-3 gap-2">
                 {(['NVE', 'NVT', 'NPT'] as const).map((ens) => (
                   <button
                     key={ens}
@@ -307,8 +307,8 @@ export function JobSubmissionForm({
 
             {/* Priority */}
             <div>
-              <label className="text-sm font-medium mb-2 block">Priority</label>
-              <div className="grid grid-cols-3 gap-2">
+              <label htmlFor="priority-select" className="text-sm font-medium mb-2 block">Priority</label>
+              <div id="priority-select" role="group" aria-label="Priority selection" className="grid grid-cols-3 gap-2">
                 {(['low', 'normal', 'high'] as const).map((pri) => (
                   <button
                     key={pri}
