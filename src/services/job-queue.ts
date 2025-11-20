@@ -92,11 +92,47 @@ export class JobQueueService {
   async getJob(jobId: string): Promise<MDJob | null> {
     this.ensureInitialized();
 
-    // TODO: Query Supabase database
-    console.log('Fetching job:', jobId);
+    try {
+      const response = await fetch(
+        `${this.config!.supabaseUrl}/rest/v1/md_jobs?id=eq.${jobId}&select=*`,
+        {
+          headers: {
+            'apikey': this.config!.supabaseKey,
+            'Authorization': `Bearer ${this.config!.supabaseKey}`,
+          },
+        }
+      );
 
-    // Stub implementation
-    return null;
+      if (!response.ok) {
+        throw new Error(`Failed to fetch job: ${response.statusText}`);
+      }
+
+      const jobs = await response.json();
+
+      if (!jobs || jobs.length === 0) {
+        return null;
+      }
+
+      const jobData = jobs[0];
+
+      return {
+        id: jobData.id,
+        userId: jobData.user_id,
+        status: jobData.status as JobStatus,
+        config: jobData.config,
+        structureId: jobData.structure_id,
+        structureData: jobData.structure_data || '',
+        createdAt: new Date(jobData.created_at),
+        startedAt: jobData.started_at ? new Date(jobData.started_at) : undefined,
+        completedAt: jobData.completed_at ? new Date(jobData.completed_at) : undefined,
+        progress: jobData.progress,
+        resultUrl: jobData.result_url,
+        errorMessage: jobData.error_message,
+      };
+    } catch (error) {
+      console.error('Failed to fetch job:', error);
+      throw error;
+    }
   }
 
   /**
@@ -105,11 +141,64 @@ export class JobQueueService {
   async queryJobs(options: JobQueryOptions): Promise<MDJob[]> {
     this.ensureInitialized();
 
-    // TODO: Query Supabase with filters
-    console.log('Querying jobs with options:', options);
+    try {
+      // Build query string with filters
+      const params = new URLSearchParams();
+      params.append('select', '*');
 
-    // Stub implementation
-    return [];
+      if (options.userId) {
+        params.append('user_id', `eq.${options.userId}`);
+      }
+
+      if (options.status) {
+        params.append('status', `eq.${options.status}`);
+      }
+
+      if (options.limit) {
+        params.append('limit', options.limit.toString());
+      }
+
+      if (options.offset) {
+        params.append('offset', options.offset.toString());
+      }
+
+      // Order by created date descending
+      params.append('order', 'created_at.desc');
+
+      const response = await fetch(
+        `${this.config!.supabaseUrl}/rest/v1/md_jobs?${params.toString()}`,
+        {
+          headers: {
+            'apikey': this.config!.supabaseKey,
+            'Authorization': `Bearer ${this.config!.supabaseKey}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to query jobs: ${response.statusText}`);
+      }
+
+      const jobsData = await response.json();
+
+      return jobsData.map((jobData: any) => ({
+        id: jobData.id,
+        userId: jobData.user_id,
+        status: jobData.status as JobStatus,
+        config: jobData.config,
+        structureId: jobData.structure_id,
+        structureData: jobData.structure_data || '',
+        createdAt: new Date(jobData.created_at),
+        startedAt: jobData.started_at ? new Date(jobData.started_at) : undefined,
+        completedAt: jobData.completed_at ? new Date(jobData.completed_at) : undefined,
+        progress: jobData.progress,
+        resultUrl: jobData.result_url,
+        errorMessage: jobData.error_message,
+      }));
+    } catch (error) {
+      console.error('Failed to query jobs:', error);
+      throw error;
+    }
   }
 
   /**
@@ -118,11 +207,37 @@ export class JobQueueService {
   async cancelJob(jobId: string): Promise<void> {
     this.ensureInitialized();
 
-    // TODO: Update job status in Supabase
-    console.log('Cancelling job:', jobId);
+    try {
+      // Update job status to CANCELLED
+      const response = await fetch(
+        `${this.config!.supabaseUrl}/rest/v1/md_jobs?id=eq.${jobId}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': this.config!.supabaseKey,
+            'Authorization': `Bearer ${this.config!.supabaseKey}`,
+            'Prefer': 'return=minimal',
+          },
+          body: JSON.stringify({
+            status: JobStatus.CANCELLED,
+            completed_at: new Date().toISOString(),
+          }),
+        }
+      );
 
-    // Stop polling if active
-    this.stopPolling(jobId);
+      if (!response.ok) {
+        throw new Error(`Failed to cancel job: ${response.statusText}`);
+      }
+
+      console.log('Job cancelled:', jobId);
+    } catch (error) {
+      console.error('Failed to cancel job:', error);
+      throw error;
+    } finally {
+      // Stop polling if active
+      this.stopPolling(jobId);
+    }
   }
 
   /**
@@ -145,8 +260,26 @@ export class JobQueueService {
       throw new Error(`Job ${jobId} has no result URL`);
     }
 
-    // TODO: Fetch result from Supabase Storage
-    return null;
+    try {
+      // Fetch result from Supabase Storage
+      const response = await fetch(job.resultUrl, {
+        headers: {
+          'apikey': this.config!.supabaseKey,
+          'Authorization': `Bearer ${this.config!.supabaseKey}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch result: ${response.statusText}`);
+      }
+
+      const resultData = await response.json();
+
+      return resultData as MDResult;
+    } catch (error) {
+      console.error('Failed to fetch job result:', error);
+      throw error;
+    }
   }
 
   /**
@@ -223,16 +356,95 @@ export class JobQueueService {
   }> {
     this.ensureInitialized();
 
-    // TODO: Query Supabase for statistics
-    return {
-      pending: 0,
-      queued: 0,
-      running: 0,
-      completed: 0,
-      failed: 0,
-      averageWaitTime: 0,
-      averageProcessingTime: 0
-    };
+    try {
+      // Query job counts by status
+      const countResponse = await fetch(
+        `${this.config!.supabaseUrl}/rest/v1/md_jobs?select=status`,
+        {
+          headers: {
+            'apikey': this.config!.supabaseKey,
+            'Authorization': `Bearer ${this.config!.supabaseKey}`,
+          },
+        }
+      );
+
+      if (!countResponse.ok) {
+        throw new Error(`Failed to fetch job counts: ${countResponse.statusText}`);
+      }
+
+      const jobs = await countResponse.json();
+
+      // Count jobs by status
+      const statusCounts = jobs.reduce((acc: any, job: any) => {
+        acc[job.status] = (acc[job.status] || 0) + 1;
+        return acc;
+      }, {});
+
+      // Query for timing statistics (only completed jobs)
+      const timingResponse = await fetch(
+        `${this.config!.supabaseUrl}/rest/v1/md_jobs?status=eq.${JobStatus.COMPLETED}&select=created_at,started_at,completed_at`,
+        {
+          headers: {
+            'apikey': this.config!.supabaseKey,
+            'Authorization': `Bearer ${this.config!.supabaseKey}`,
+          },
+        }
+      );
+
+      let averageWaitTime = 0;
+      let averageProcessingTime = 0;
+
+      if (timingResponse.ok) {
+        const completedJobs = await timingResponse.json();
+
+        if (completedJobs.length > 0) {
+          const waitTimes: number[] = [];
+          const processingTimes: number[] = [];
+
+          completedJobs.forEach((job: any) => {
+            if (job.created_at && job.started_at && job.completed_at) {
+              const created = new Date(job.created_at).getTime();
+              const started = new Date(job.started_at).getTime();
+              const completed = new Date(job.completed_at).getTime();
+
+              waitTimes.push(started - created);
+              processingTimes.push(completed - started);
+            }
+          });
+
+          if (waitTimes.length > 0) {
+            averageWaitTime = waitTimes.reduce((a, b) => a + b, 0) / waitTimes.length;
+          }
+
+          if (processingTimes.length > 0) {
+            averageProcessingTime = processingTimes.reduce((a, b) => a + b, 0) / processingTimes.length;
+          }
+        }
+      }
+
+      return {
+        pending: statusCounts[JobStatus.PENDING] || 0,
+        queued: statusCounts[JobStatus.QUEUED] || 0,
+        running: statusCounts[JobStatus.RUNNING] || 0,
+        completed: statusCounts[JobStatus.COMPLETED] || 0,
+        failed: statusCounts[JobStatus.FAILED] || 0,
+        averageWaitTime: Math.round(averageWaitTime / 1000), // Convert to seconds
+        averageProcessingTime: Math.round(averageProcessingTime / 1000), // Convert to seconds
+      };
+    } catch (error) {
+      console.error('Failed to fetch queue statistics:', error);
+
+      // Return zeros on error
+      return {
+        pending: 0,
+        queued: 0,
+        running: 0,
+        completed: 0,
+        failed: 0,
+        averageWaitTime: 0,
+        averageProcessingTime: 0,
+      };
+    }
   }
 
   /**
@@ -296,17 +508,75 @@ export class JobQueueService {
       throw new Error('Service not initialized');
     }
 
-    // TODO: Implement Supabase submission
-    // This should:
-    // 1. Insert job record into 'md_jobs' table
-    // 2. Trigger Edge Function to start processing
-    // 3. Store structure data in Supabase Storage
+    try {
+      // 1. Insert job record into 'md_jobs' table
+      const jobRecord = {
+        id: job.id,
+        user_id: job.userId,
+        status: job.status,
+        config: job.config,
+        structure_id: job.structureId,
+        created_at: job.createdAt.toISOString(),
+        progress: job.progress,
+      };
 
-    console.log('Submitting to Supabase:', {
-      jobId: job.id,
-      url: this.config.supabaseUrl,
-      status: job.status
-    });
+      const insertResponse = await fetch(`${this.config.supabaseUrl}/rest/v1/md_jobs`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': this.config.supabaseKey,
+          'Authorization': `Bearer ${this.config.supabaseKey}`,
+          'Prefer': 'return=minimal',
+        },
+        body: JSON.stringify(jobRecord),
+      });
+
+      if (!insertResponse.ok) {
+        throw new Error(`Failed to insert job record: ${insertResponse.statusText}`);
+      }
+
+      // 2. Store structure data in Supabase Storage
+      const storageResponse = await fetch(
+        `${this.config.supabaseUrl}/storage/v1/object/md-structures/${job.id}.pdb`,
+        {
+          method: 'POST',
+          headers: {
+            'apikey': this.config.supabaseKey,
+            'Authorization': `Bearer ${this.config.supabaseKey}`,
+            'Content-Type': 'chemical/x-pdb',
+          },
+          body: job.structureData,
+        }
+      );
+
+      if (!storageResponse.ok) {
+        throw new Error(`Failed to upload structure data: ${storageResponse.statusText}`);
+      }
+
+      // 3. Trigger Edge Function to start processing
+      const functionResponse = await fetch(
+        `${this.config.supabaseUrl}/functions/v1/process-md-job`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': this.config.supabaseKey,
+            'Authorization': `Bearer ${this.config.supabaseKey}`,
+          },
+          body: JSON.stringify({ jobId: job.id }),
+        }
+      );
+
+      if (!functionResponse.ok) {
+        console.warn(`Edge function trigger failed: ${functionResponse.statusText}`);
+        // Don't throw - job is queued and can be processed by cron job
+      }
+
+      console.log('Successfully submitted job to Supabase:', job.id);
+    } catch (error) {
+      console.error('Supabase submission failed:', error);
+      throw error;
+    }
   }
 }
 

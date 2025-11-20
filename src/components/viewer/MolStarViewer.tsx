@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
+import { molstarService } from '@/services/molstar-service';
 
 interface MolStarViewerProps {
   pdbId?: string;
@@ -20,6 +21,7 @@ export function MolStarViewer({
 }: MolStarViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isReady, setIsReady] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     // Initialize Mol* viewer
@@ -28,23 +30,23 @@ export function MolStarViewer({
 
       try {
         onLoadStart?.();
+        setIsLoading(true);
 
-        // TODO: Initialize Mol* viewer instance
-        // This will be implemented in the integration phase
-        // const viewer = await createPluginUI(containerRef.current, {
-        //   ...DefaultPluginUISpec(),
-        //   layout: {
-        //     initial: {
-        //       isExpanded: false,
-        //       showControls: false
-        //     }
-        //   }
-        // });
+        // Initialize Mol* viewer using the molstarService
+        await molstarService.initialize(containerRef.current, {
+          layoutIsExpanded: false,
+          layoutShowControls: false,
+          viewportShowExpand: true,
+          viewportShowSelectionMode: true,
+          viewportShowAnimation: false,
+        });
 
         setIsReady(true);
+        setIsLoading(false);
         onLoadComplete?.();
       } catch (error) {
         console.error('Failed to initialize Mol* viewer:', error);
+        setIsLoading(false);
         onError?.('Failed to initialize 3D viewer');
       }
     };
@@ -53,8 +55,9 @@ export function MolStarViewer({
 
     return () => {
       // Cleanup Mol* viewer
+      molstarService.dispose();
     };
-  }, []);
+  }, [onLoadStart, onLoadComplete, onError]);
 
   useEffect(() => {
     if (!pdbId || !isReady) return;
@@ -62,22 +65,22 @@ export function MolStarViewer({
     const loadStructure = async () => {
       try {
         onLoadStart?.();
+        setIsLoading(true);
 
-        // TODO: Load PDB structure
-        // await viewer.loadStructureFromUrl(
-        //   `https://files.rcsb.org/download/${pdbId}.cif`,
-        //   'mmcif'
-        // );
+        // Load PDB structure using molstarService
+        await molstarService.loadStructureById(pdbId);
 
+        setIsLoading(false);
         onLoadComplete?.();
       } catch (error) {
         console.error('Failed to load structure:', error);
+        setIsLoading(false);
         onError?.(`Failed to load structure: ${pdbId}`);
       }
     };
 
     loadStructure();
-  }, [pdbId, isReady]);
+  }, [pdbId, isReady, onLoadStart, onLoadComplete, onError]);
 
   return (
     <div
@@ -89,7 +92,12 @@ export function MolStarViewer({
       {/* Mol* will render into this container */}
       {!isReady && (
         <div className="flex h-full items-center justify-center text-white">
-          Initializing viewer...
+          {isLoading ? 'Initializing viewer...' : 'Ready'}
+        </div>
+      )}
+      {isReady && isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+          <div className="text-white">Loading structure...</div>
         </div>
       )}
     </div>

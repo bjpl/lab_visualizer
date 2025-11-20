@@ -91,7 +91,9 @@ export interface CameraSnapshot {
  */
 export interface SelectionQuery {
   type: 'atom' | 'residue' | 'chain';
-  ids: string[];
+  atomIds?: string[];
+  residueIds?: string[];
+  chainIds?: string[];
 }
 
 /**
