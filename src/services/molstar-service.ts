@@ -344,7 +344,54 @@ export class MolstarService {
     }
 
     try {
-      // TODO: Implement Loci selection with Mol* query system
+      const plugin = this.viewer.plugin;
+      const state = plugin.state.data;
+
+      // Get structure reference
+      const structures = state.selectQ((q) =>
+        q.ofType(StateTransforms.Model.StructureFromModel)
+      );
+
+      if (structures.length === 0) {
+        throw new Error('No structure loaded');
+      }
+
+      // Build Mol* selection query based on query type
+      let expression: any;
+
+      switch (query.type) {
+        case 'atom':
+          if (query.atomIds && query.atomIds.length > 0) {
+            expression = plugin.managers.structure.selection.fromExpression(
+              `@${query.atomIds.join(',')}`
+            );
+          }
+          break;
+
+        case 'residue':
+          if (query.residueIds && query.residueIds.length > 0) {
+            expression = plugin.managers.structure.selection.fromExpression(
+              `${query.residueIds.join(',')}`
+            );
+          }
+          break;
+
+        case 'chain':
+          if (query.chainIds && query.chainIds.length > 0) {
+            expression = plugin.managers.structure.selection.fromExpression(
+              `chain ${query.chainIds.join(',')}`
+            );
+          }
+          break;
+
+        default:
+          throw new Error(`Unknown selection type: ${query.type}`);
+      }
+
+      if (expression) {
+        await plugin.managers.structure.selection.fromExpression(expression);
+      }
+
       this.emit('selection-changed', query);
     } catch (error) {
       console.error('[MolstarService] Selection failed:', error);
@@ -477,13 +524,58 @@ export class MolstarService {
    * Extract metadata from structure
    */
   private extractMetadata(structure: any): StructureMetadata {
-    // TODO: Extract real metadata from Mol* structure object
-    return {
-      title: 'Unknown Structure',
-      chains: ['A'],
-      atomCount: 0,
-      residueCount: 0,
-    };
+    try {
+      // Access the structure object from the state object
+      const structureData = structure.obj?.data;
+
+      if (!structureData) {
+        console.warn('[MolstarService] No structure data available for metadata extraction');
+        return {
+          title: 'Unknown Structure',
+          chains: ['A'],
+          atomCount: 0,
+          residueCount: 0,
+        };
+      }
+
+      // Extract basic information
+      const model = structureData.models?.[0];
+      const title = model?.label || structureData.label || 'Unknown Structure';
+
+      // Extract chain information
+      const chains: string[] = [];
+      const units = structureData.units || [];
+
+      for (const unit of units) {
+        const chainId = unit.chainGroupId || unit.model?.label;
+        if (chainId && !chains.includes(chainId)) {
+          chains.push(chainId);
+        }
+      }
+
+      // Extract atom and residue counts
+      const atomCount = structureData.elementCount || 0;
+
+      // Estimate residue count from atom count (approximate: 1 residue ~ 8-10 atoms)
+      const residueCount = structureData.residueCount || Math.floor(atomCount / 9);
+
+      return {
+        title,
+        chains: chains.length > 0 ? chains : ['A'],
+        atomCount,
+        residueCount,
+      };
+    } catch (error) {
+      console.error('[MolstarService] Metadata extraction failed:', error);
+
+      // Return default metadata on error
+      return {
+        title: 'Unknown Structure',
+        chains: ['A'],
+        atomCount: 0,
+        residueCount: 0,
+      };
+    }
   }
 
   /**
