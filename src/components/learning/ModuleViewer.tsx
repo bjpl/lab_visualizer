@@ -8,6 +8,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLearningModule } from '@/hooks/use-learning';
 import type { ModuleContentData } from '@/types/learning';
+import { sanitizeForReact } from '@/lib/security/xss-sanitizer';
 
 interface ModuleViewerProps {
   moduleId: string;
@@ -188,7 +189,8 @@ function GuideContent({ content }: { content: Extract<ModuleContentData, { type:
       {content.sections.sort((a, b) => a.order - b.order).map((section) => (
         <div key={section.id} className="mb-8">
           <h2>{section.title}</h2>
-          <div dangerouslySetInnerHTML={{ __html: section.content }} />
+          {/* XSS Protection: Sanitize HTML content before rendering */}
+          <div dangerouslySetInnerHTML={sanitizeForReact(section.content)} />
           {section.images && section.images.map((img, idx) => (
             <img key={idx} src={img} alt={`${section.title} image ${idx + 1}`} className="rounded-lg my-4" />
           ))}

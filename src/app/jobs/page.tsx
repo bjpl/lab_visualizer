@@ -21,6 +21,7 @@ import { JobActions } from '@/components/jobs/JobActions';
 import { useJobQueue } from '@/hooks/useJobQueue';
 import { useJobSubscription } from '@/hooks/useJobSubscription';
 import { useStore } from '@/stores';
+import { useAuth } from '@/hooks/use-auth';
 import { MDJob, MDResult } from '@/types/md-types';
 
 export default function JobsPage() {
@@ -28,14 +29,18 @@ export default function JobsPage() {
   const [showSubmitForm, setShowSubmitForm] = useState(false);
   const [queueStats, setQueueStats] = useState<any>(null);
 
+  const { user } = useAuth();
   const { submitJob, cancelJob, removeJob, retryJob, getQueueStats } = useJobQueue();
   const jobs = useStore((state) => Array.from(state.jobs.values()));
   const results = useStore((state) => state.results);
 
+  // Get user ID from auth, fallback to demo mode if not authenticated
+  const userId = user?.id || 'demo-user';
+
   // Convert simulation jobs to MD jobs (temporary adapter)
   const mdJobs: MDJob[] = jobs.map((job) => ({
     id: job.id,
-    userId: 'user-id', // TODO: Get from auth
+    userId: userId,
     status: job.status as any,
     config: job.parameters as any,
     structureId: job.name,
@@ -53,7 +58,7 @@ export default function JobsPage() {
 
   // Subscribe to real-time updates for all user jobs
   useJobSubscription({
-    userId: 'user-id', // TODO: Get from auth
+    userId: userId,
     onUpdate: (update) => {
       // Updates are handled by the subscription
       console.log('[Jobs] Job update:', update);
