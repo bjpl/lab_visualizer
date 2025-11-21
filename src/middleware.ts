@@ -9,8 +9,14 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import type { Database } from '@/types/database';
 
-// Check if we're in demo mode
-const isDemoMode = () => process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
+// Check if we're in demo mode (explicit or missing credentials)
+const isDemoMode = () => {
+  // Explicit demo mode
+  if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') return true;
+  // Missing Supabase credentials = auto demo mode
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) return true;
+  return false;
+};
 
 // Routes that require authentication
 const PROTECTED_ROUTES = [
