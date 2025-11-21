@@ -1,19 +1,24 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 @layer base {
   :root {
     --font-inter: 'Inter', system-ui, -apple-system, sans-serif;
     --font-mono: 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', monospace;
+    --border: 229 231 235;
   }
 
   * {
-    @apply border-border;
+    border-color: rgb(var(--border));
   }
 
   body {
-    @apply bg-white text-gray-900 dark:bg-gray-950 dark:text-gray-50;
+    background-color: white;
+    color: rgb(17 24 39);
+  }
+
+  .dark body {
+    background-color: rgb(3 7 18);
+    color: rgb(249 250 251);
   }
 }
 
