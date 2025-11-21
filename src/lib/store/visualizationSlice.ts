@@ -32,6 +32,10 @@ export interface VisualizationState {
   showWater: boolean;
   quality: 'low' | 'medium' | 'high';
 
+  // Selection state
+  selectedAtoms: string[];
+  selectionHistory: string[];
+
   // Actions
   setRepresentation: (rep: RepresentationType) => void;
   setColorScheme: (scheme: ColorScheme) => void;
@@ -42,6 +46,11 @@ export interface VisualizationState {
   setShowWater: (show: boolean) => void;
   setQuality: (quality: 'low' | 'medium' | 'high') => void;
   resetSettings: () => void;
+
+  // Selection actions
+  setSelectedAtoms: (atoms: string[]) => void;
+  clearSelection: () => void;
+  focusOnSelection: () => void;
 }
 
 const defaultState = {
@@ -53,6 +62,8 @@ const defaultState = {
   showLigands: true,
   showWater: false,
   quality: 'medium' as const,
+  selectedAtoms: [] as string[],
+  selectionHistory: [] as string[],
 };
 
 export const useVisualizationStore = create<VisualizationState>()(
@@ -69,6 +80,19 @@ export const useVisualizationStore = create<VisualizationState>()(
       setShowWater: (showWater) => set({ showWater }),
       setQuality: (quality) => set({ quality }),
       resetSettings: () => set(defaultState),
+
+      // Selection actions
+      setSelectedAtoms: (selectedAtoms) => set((state) => ({
+        selectedAtoms,
+        selectionHistory: selectedAtoms.length > 0
+          ? [...state.selectionHistory.slice(-9), selectedAtoms.join(',')]
+          : state.selectionHistory,
+      })),
+      clearSelection: () => set({ selectedAtoms: [] }),
+      focusOnSelection: () => {
+        // This will be implemented by the viewer component
+        console.log('Focus on selection requested');
+      },
     }),
     {
       name: 'visualization-settings',
