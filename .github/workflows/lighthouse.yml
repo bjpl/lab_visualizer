@@ -91,7 +91,7 @@ jobs:
             --output-path ./web-vitals-report
 
       - name: Upload Web Vitals report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: web-vitals-report
           path: web-vitals-report/

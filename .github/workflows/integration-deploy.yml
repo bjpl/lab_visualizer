@@ -213,7 +213,7 @@ jobs:
 
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v5
         with:
           name: integration-test-results
           path: test-results/
@@ -262,7 +262,7 @@ jobs:
           supabase db exec "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'"
 
       - name: Upload backup
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v5
         with:
           name: database-backup
           path: supabase/backups/
@@ -344,7 +344,7 @@ jobs:
           npx next-bundle-analyzer || true
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v5
         with:
           name: build
           path: .next/
@@ -419,7 +419,7 @@ jobs:
 
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v5
         with:
           name: smoke-test-results
           path: test-results/

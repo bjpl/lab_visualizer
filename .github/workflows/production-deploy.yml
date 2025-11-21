@@ -66,7 +66,7 @@ jobs:
 
       - name: Save test results
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v5
         with:
           name: test-results
           path: |
@@ -118,7 +118,7 @@ jobs:
           format: 'HTML'
 
       - name: Upload Dependency-Check report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v5
         with:
           name: dependency-check-report
           path: reports/
@@ -187,7 +187,7 @@ jobs:
           LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
 
       - name: Save Lighthouse reports
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v5
         with:
           name: lighthouse-reports
           path: .lighthouseci/
