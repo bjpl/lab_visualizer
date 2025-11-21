@@ -1,10 +1,12 @@
 /**
  * Authentication Service - Supabase Auth Wrapper
  * Handles all authentication operations for LAB Visualization Platform
+ * Supports demo mode with mock services when Supabase is not configured
  */
 
 import { createClient, SupabaseClient, User, Session, AuthError } from '@supabase/supabase-js';
 import type { Database } from '@/types/database';
+import { createTypedMockClient, isDemoMode as checkDemoMode } from '@/mocks/services';
 
 interface SignUpData {
   email: string;
@@ -56,23 +58,37 @@ interface ProfileData {
 
 export class AuthService {
   private supabase: SupabaseClient<Database>;
+  private isDemo: boolean;
 
   constructor() {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-    if (!supabaseUrl || !supabaseAnonKey) {
-      throw new Error('Missing Supabase environment variables');
-    }
+    // Check if we're in demo mode
+    this.isDemo = checkDemoMode() || !supabaseUrl || !supabaseAnonKey;
 
-    this.supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        autoRefreshToken: true,
-        persistSession: true,
-        detectSessionInUrl: true,
-        storage: typeof window !== 'undefined' ? window.localStorage : undefined,
-      },
-    });
+    if (this.isDemo) {
+      // Use mock client for demo mode
+      console.log('[AuthService] Running in demo mode with mock services');
+      this.supabase = createTypedMockClient();
+    } else {
+      // Use real Supabase client
+      this.supabase = createClient<Database>(supabaseUrl!, supabaseAnonKey!, {
+        auth: {
+          autoRefreshToken: true,
+          persistSession: true,
+          detectSessionInUrl: true,
+          storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+        },
+      });
+    }
+  }
+
+  /**
+   * Check if running in demo mode
+   */
+  isDemoMode(): boolean {
+    return this.isDemo;
   }
 
   /**
