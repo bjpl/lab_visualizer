@@ -11,7 +11,7 @@ jobs:
     name: Lighthouse CI
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: actions/setup-node@v4
         with:
@@ -69,7 +69,7 @@ jobs:
     name: Web Vitals Analysis
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: actions/setup-node@v4
         with:
@@ -91,7 +91,7 @@ jobs:
             --output-path ./web-vitals-report
 
       - name: Upload Web Vitals report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: web-vitals-report
           path: web-vitals-report/
