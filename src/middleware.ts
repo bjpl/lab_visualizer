@@ -1,12 +1,16 @@
 /**
  * Next.js Middleware for Authentication and Route Protection
  * Handles token refresh and redirects for protected routes
+ * Supports demo mode without Supabase
  */
 
-import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
+import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import type { Database } from '@/types/database';
+
+// Check if we're in demo mode
+const isDemoMode = () => process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
 
 // Routes that require authentication
 const PROTECTED_ROUTES = [
@@ -60,9 +64,39 @@ export async function middleware(req: NextRequest) {
     return res;
   }
 
+  // In demo mode, skip all auth checks and allow access
+  if (isDemoMode()) {
+    // Add security headers even in demo mode
+    const response = res;
+    response.headers.set('X-Frame-Options', 'DENY');
+    response.headers.set('X-Content-Type-Options', 'nosniff');
+    response.headers.set('Referrer-Policy', 'origin-when-cross-origin');
+    response.headers.set(
+      'Permissions-Policy',
+      'camera=(), microphone=(), geolocation=()'
+    );
+    return response;
+  }
+
   try {
     // Create a Supabase client configured to use cookies
-    const supabase = createMiddlewareClient<Database>({ req, res });
+    const supabase = createServerClient<Database>(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return req.cookies.get(name)?.value;
+          },
+          set(name: string, value: string, options: CookieOptions) {
+            res.cookies.set({ name, value, ...options });
+          },
+          remove(name: string, options: CookieOptions) {
+            res.cookies.set({ name, value: '', ...options });
+          },
+        },
+      }
+    );
 
     // Refresh session if expired - required for Server Components
     const {
