@@ -45,15 +45,25 @@ export const TIER_LIMITS: Record<RateLimitTier, RateLimitConfig> = {
  * Override default tier limits for specific endpoints
  */
 export const ENDPOINT_LIMITS: EndpointRateLimit[] = [
-  // Authentication endpoints - stricter limits
+  // Authentication endpoints - stricter limits (5 attempts per 15 minutes)
   {
     path: '/api/auth/login',
     method: 'POST',
     config: {
       windowMs: 15 * 60 * 1000, // 15 minutes
-      maxRequests: isDevelopment ? 100 : 5,
+      maxRequests: isDevelopment ? 100 : 5, // 5 attempts in production
       tier: RateLimitTier.FREE,
-      message: 'Too many login attempts. Please try again later.'
+      message: 'Too many login attempts. Please try again in 15 minutes.'
+    }
+  },
+  {
+    path: '/api/auth/signin',
+    method: 'POST',
+    config: {
+      windowMs: 15 * 60 * 1000, // 15 minutes
+      maxRequests: isDevelopment ? 100 : 5, // 5 attempts in production
+      tier: RateLimitTier.FREE,
+      message: 'Too many sign-in attempts. Please try again in 15 minutes.'
     }
   },
   {

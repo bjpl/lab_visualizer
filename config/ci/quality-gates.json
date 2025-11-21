@@ -1,0 +1,108 @@
+{
+  "version": "1.0.0",
+  "description": "Quality gate configuration for CI/CD pipeline",
+  "thresholds": {
+    "coverage": {
+      "lines": 75,
+      "statements": 75,
+      "functions": 75,
+      "branches": 75,
+      "description": "Minimum test coverage percentages required"
+    },
+    "bundleSize": {
+      "maxTotalSize": 512000,
+      "maxChunkSize": 256000,
+      "description": "Maximum bundle sizes in bytes"
+    },
+    "performance": {
+      "lighthouse": {
+        "performance": 85,
+        "accessibility": 90,
+        "bestPractices": 90,
+        "seo": 90
+      },
+      "responseTime": {
+        "excellent": 1000,
+        "acceptable": 3000,
+        "description": "Response time thresholds in milliseconds"
+      }
+    },
+    "security": {
+      "vulnerabilities": {
+        "critical": 0,
+        "high": 0,
+        "moderate": 5,
+        "low": 10
+      },
+      "description": "Maximum allowed vulnerabilities by severity"
+    },
+    "codeQuality": {
+      "eslintErrors": 0,
+      "eslintWarnings": 10,
+      "typeErrors": 0,
+      "description": "Code quality thresholds"
+    }
+  },
+  "gates": [
+    {
+      "name": "pr-gate",
+      "description": "Quality gate for pull requests",
+      "required": [
+        "lint",
+        "typecheck",
+        "test-coverage",
+        "build",
+        "security-scan"
+      ],
+      "optional": [
+        "lighthouse"
+      ]
+    },
+    {
+      "name": "staging-gate",
+      "description": "Quality gate for staging deployments",
+      "required": [
+        "lint",
+        "typecheck",
+        "test-coverage",
+        "e2e-tests",
+        "build",
+        "security-scan",
+        "bundle-size"
+      ],
+      "optional": [
+        "lighthouse",
+        "visual-regression"
+      ]
+    },
+    {
+      "name": "production-gate",
+      "description": "Quality gate for production deployments",
+      "required": [
+        "lint",
+        "typecheck",
+        "test-coverage",
+        "e2e-tests",
+        "build",
+        "security-scan",
+        "bundle-size",
+        "lighthouse",
+        "smoke-tests"
+      ],
+      "optional": [
+        "visual-regression",
+        "performance-benchmarks"
+      ]
+    }
+  ],
+  "enforcement": {
+    "blockOnFailure": true,
+    "allowOverride": false,
+    "notifyOnWarning": true,
+    "requireApproval": {
+      "production": true,
+      "staging": false,
+      "preview": false
+    }
+  }
+}
