@@ -40,8 +40,8 @@
   "license": "MIT",
   "dependencies": {
     "@sentry/nextjs": "^8.0.0",
-    "@supabase/ssr": "^0.5.2",
-    "@supabase/supabase-js": "^2.45.6",
+    "@supabase/ssr": "^0.7.0",
+    "@supabase/supabase-js": "^2.84.0",
     "@types/dompurify": "^3.0.5",
     "@vercel/analytics": "^1.1.1",
     "@vercel/speed-insights": "^1.0.2",
