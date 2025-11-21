@@ -107,7 +107,7 @@ jobs:
         run: sleep 30
 
       - name: Run Lighthouse audit
-        uses: treosh/lighthouse-ci-action@v11
+        uses: treosh/lighthouse-ci-action@v12
         with:
           urls: https://lab-visualizer.vercel.app
           uploadArtifacts: true
