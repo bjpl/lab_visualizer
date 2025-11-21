@@ -33,7 +33,7 @@ jobs:
       previous_deployment: ${{ steps.find-previous.outputs.deployment_id }}
       can_rollback: ${{ steps.validate.outputs.can_rollback }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -71,7 +71,7 @@ jobs:
     environment:
       name: ${{ inputs.environment }}-rollback
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           ref: ${{ needs.validate-rollback.outputs.previous_deployment }}
 
