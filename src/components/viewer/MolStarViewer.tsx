@@ -31,7 +31,8 @@ export function MolStarViewer({
   onError,
   className,
 }: MolStarViewerProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const molstarContainerRef = useRef<HTMLDivElement | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [initError, setInitError] = useState<string | null>(null);
@@ -55,13 +56,23 @@ export function MolStarViewer({
     mountedRef.current = true;
     initIdRef.current += 1;
     const currentInitId = initIdRef.current;
+    const wrapper = wrapperRef.current;
+
+    if (!wrapper) {
+      console.warn('[MolStarViewer] No wrapper ref');
+      return;
+    }
+
+    // Create a container for MolStar outside React's reconciliation
+    // This prevents the Node.removeChild error during StrictMode/hot reload
+    const molstarContainer = document.createElement('div');
+    molstarContainer.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;';
+    molstarContainer.setAttribute('data-molstar-container', 'true');
+
+    // Store ref for cleanup and service use
+    molstarContainerRef.current = molstarContainer;
 
     const initViewer = async () => {
-      if (!containerRef.current) {
-        console.warn('[MolStarViewer] No container ref');
-        return;
-      }
-
       // Prevent double initialization
       if (initializingRef.current) {
         console.info('[MolStarViewer] Already initializing, skipping');
@@ -75,6 +86,9 @@ export function MolStarViewer({
         setIsLoading(true);
         setInitError(null);
 
+        // Append container to wrapper (outside React's DOM management)
+        wrapper.appendChild(molstarContainer);
+
         // Dynamically import molstar service to avoid SSR issues
         const { molstarService } = await getMolstarService();
 
@@ -82,11 +96,15 @@ export function MolStarViewer({
         if (!mountedRef.current || currentInitId !== initIdRef.current) {
           console.info('[MolStarViewer] Stale init cycle, aborting');
           initializingRef.current = false;
+          // Clean up the container we added
+          if (molstarContainer.parentNode) {
+            molstarContainer.parentNode.removeChild(molstarContainer);
+          }
           return;
         }
 
         // Initialize Mol* viewer using the molstarService
-        await molstarService.initialize(containerRef.current, {
+        await molstarService.initialize(molstarContainer, {
           layoutIsExpanded: false,
           layoutShowControls: false,
           viewportShowExpand: true,
@@ -99,6 +117,9 @@ export function MolStarViewer({
           console.info('[MolStarViewer] Stale init cycle after init, disposing');
           molstarService.dispose();
           initializingRef.current = false;
+          if (molstarContainer.parentNode) {
+            molstarContainer.parentNode.removeChild(molstarContainer);
+          }
           return;
         }
 
@@ -125,8 +146,16 @@ export function MolStarViewer({
       mountedRef.current = false;
       clearTimeout(timeoutId);
 
-      // Only dispose if this was the active init cycle
-      // Use sync check to avoid race with next mount
+      // Clean up: Remove the MolStar container from DOM
+      // Since we manually added it, we manually remove it (not React)
+      if (molstarContainer.parentNode) {
+        try {
+          molstarContainer.parentNode.removeChild(molstarContainer);
+        } catch {
+          // Ignore if already removed
+        }
+      }
+      molstarContainerRef.current = null;
     };
   }, []); // Empty deps - only run once on mount
 
@@ -170,24 +199,25 @@ export function MolStarViewer({
 
   return (
     <div
-      ref={containerRef}
+      ref={wrapperRef}
       className={cn('relative h-full w-full bg-black', className)}
       role="img"
       aria-label={pdbId ? `3D structure of ${pdbId}` : '3D molecular viewer'}
     >
-      {/* Mol* will render into this container */}
+      {/* MolStar container is created programmatically and appended here */}
+      {/* This prevents React from trying to reconcile MolStar's DOM nodes */}
       {!isReady && !initError && (
-        <div className="flex h-full items-center justify-center text-white">
+        <div className="absolute inset-0 flex h-full items-center justify-center text-white z-10 pointer-events-none">
           {isLoading ? 'Initializing viewer...' : 'Ready'}
         </div>
       )}
       {isReady && isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+        <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-10">
           <div className="text-white">Loading structure...</div>
         </div>
       )}
       {initError && (
-        <div className="flex h-full items-center justify-center text-red-400">
+        <div className="absolute inset-0 flex h-full items-center justify-center text-red-400 z-10">
           <div className="text-center">
             <div className="mb-2">{initError}</div>
             <button
