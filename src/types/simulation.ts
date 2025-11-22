@@ -10,7 +10,7 @@ export interface SimulationPreset {
   id: string;
   name: string;
   description: string;
-  category: 'folding' | 'docking' | 'minimization' | 'equilibration' | 'demo';
+  category: 'folding' | 'docking' | 'minimization' | 'equilibration' | 'demo' | 'enzyme-catalysis' | 'fermentation';
   difficulty: 'beginner' | 'intermediate' | 'advanced';
   estimatedTime: number; // seconds
   parameters: {
@@ -249,6 +249,112 @@ export const SIMULATION_PRESETS: SimulationPreset[] = [
       'Understand molecular dynamics basics',
       'Observe hydrogen bonding',
       'Learn about temperature control'
+    ]
+  },
+  // Lactobacillus-specific simulation presets
+  {
+    id: 'lactate-dehydrogenase-catalysis',
+    name: 'Lactate Dehydrogenase Catalysis',
+    description: 'Watch how LDH converts pyruvate to lactate',
+    category: 'enzyme-catalysis',
+    difficulty: 'beginner',
+    estimatedTime: 12,
+    parameters: {
+      temperature: 310,
+      timestep: 0.5,
+      steps: 6000,
+      integrator: 'langevin',
+      forceField: 'AMBER',
+      ensemble: 'NVT'
+    },
+    learningObjectives: [
+      'NAD+ binding',
+      'Substrate specificity',
+      'Fermentation mechanism'
+    ]
+  },
+  {
+    id: 'bacteriocin-membrane-interaction',
+    name: 'Bacteriocin Membrane Interaction',
+    description: 'Simulate nisin inserting into bacterial membrane',
+    category: 'docking',
+    difficulty: 'intermediate',
+    estimatedTime: 18,
+    parameters: {
+      temperature: 310,
+      timestep: 2.0,
+      steps: 10000,
+      integrator: 'leapfrog',
+      forceField: 'CHARMM',
+      ensemble: 'NPT'
+    },
+    learningObjectives: [
+      'Lipid II binding',
+      'Pore formation',
+      'Antimicrobial activity'
+    ]
+  },
+  {
+    id: 's-layer-protein-assembly',
+    name: 'S-Layer Protein Assembly',
+    description: 'Watch S-layer proteins self-assemble into lattice',
+    category: 'folding',
+    difficulty: 'advanced',
+    estimatedTime: 25,
+    parameters: {
+      temperature: 300,
+      timestep: 2.0,
+      steps: 15000,
+      integrator: 'langevin',
+      forceField: 'AMBER',
+      ensemble: 'NVT'
+    },
+    learningObjectives: [
+      'Self-assembly',
+      'Crystalline organization',
+      'Surface anchoring'
+    ]
+  },
+  {
+    id: 'probiotic-adhesin-binding',
+    name: 'Probiotic Adhesin Binding',
+    description: 'Simulate adhesin proteins binding to host epithelial cells',
+    category: 'docking',
+    difficulty: 'intermediate',
+    estimatedTime: 16,
+    parameters: {
+      temperature: 310,
+      timestep: 1.0,
+      steps: 8000,
+      integrator: 'verlet',
+      forceField: 'CHARMM',
+      ensemble: 'NVT'
+    },
+    learningObjectives: [
+      'Host-microbe interaction',
+      'Mucosal adhesion',
+      'Colonization'
+    ]
+  },
+  {
+    id: 'fermentation-energy-dynamics',
+    name: 'Fermentation Energy Dynamics',
+    description: 'Visualize energy transformations during lactic acid fermentation',
+    category: 'demo',
+    difficulty: 'beginner',
+    estimatedTime: 8,
+    parameters: {
+      temperature: 303,
+      timestep: 1.0,
+      steps: 4000,
+      integrator: 'verlet',
+      forceField: 'OPLS',
+      ensemble: 'NVT'
+    },
+    learningObjectives: [
+      'ATP production',
+      'Redox balance',
+      'Metabolic efficiency'
     ]
   }
 ];
