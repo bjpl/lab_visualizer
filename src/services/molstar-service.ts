@@ -501,17 +501,28 @@ export class MolstarService {
    * Dispose viewer and cleanup
    */
   public dispose(): void {
+    const hadViewer = this.viewer !== null;
+
     if (this.viewer) {
       try {
         this.viewer.dispose();
       } catch (error) {
-        console.warn('[MolstarService] Error during disposal:', error);
+        // Ignore DOM errors during disposal - container may already be detached
+        // This is common during React StrictMode or hot reload
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        if (errorMessage.includes('removeChild') || errorMessage.includes('not a child')) {
+          console.info('[MolstarService] DOM cleanup handled by React, skipping');
+        } else {
+          console.warn('[MolstarService] Error during disposal:', error);
+        }
       }
       this.viewer = null;
     }
 
-    this.eventListeners.clear();
+    // Clear container reference but don't manipulate DOM directly
+    // Let React handle the DOM cleanup to avoid conflicts
     this.container = null;
+    this.eventListeners.clear();
 
     // Reset performance metrics
     this.performanceMetrics = {
@@ -522,7 +533,9 @@ export class MolstarService {
       triangleCount: 0,
     };
 
-    console.info('[MolstarService] Disposed');
+    if (hadViewer) {
+      console.info('[MolstarService] Disposed');
+    }
   }
 
   /**
