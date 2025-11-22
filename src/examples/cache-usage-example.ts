@@ -5,6 +5,7 @@
  * in various scenarios.
  */
 
+import React from 'react';
 import { getCacheManager } from '@/services/cache';
 import { CACHE_KEY_PATTERNS, CACHE_TTL } from '@/config/cache.config';
 
@@ -354,9 +355,9 @@ async function fetchMolecule(id: string) {
  * React Hook Example
  */
 export function useCachedPDB(pdbId: string) {
-  const [data, setData] = React.useState(null);
+  const [data, setData] = React.useState<unknown>(null);
   const [loading, setLoading] = React.useState(true);
-  const [error, setError] = React.useState(null);
+  const [error, setError] = React.useState<unknown>(null);
 
   React.useEffect(() => {
     const cache = getCacheManager();

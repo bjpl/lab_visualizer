@@ -32,12 +32,12 @@ export type AppState = VisualizationSlice &
 export const useAppStore = create<AppState>()(
   devtools(
     persist(
-      immer((...a) => ({
+      immer((...a: any[]) => ({
         // Combine all slices
-        ...createVisualizationSlice(...a),
-        ...createCollaborationSlice(...a),
-        ...createSimulationSlice(...a),
-        ...createUISlice(...a),
+        ...createVisualizationSlice(...(a as Parameters<typeof createVisualizationSlice>)),
+        ...createCollaborationSlice(...(a as Parameters<typeof createCollaborationSlice>)),
+        ...createSimulationSlice(...(a as Parameters<typeof createSimulationSlice>)),
+        ...createUISlice(...(a as Parameters<typeof createUISlice>)),
       })),
       {
         name: 'lab-visualizer-storage',
@@ -124,14 +124,8 @@ export const useUI = () =>
  * Shallow comparison hooks for performance
  */
 export const useShallowVisualization = () =>
-  useAppStore(
-    (state) => ({
-      structure: state.structure,
-      representation: state.representation,
-      colorScheme: state.colorScheme,
-    }),
-    (a, b) =>
-      a.structure === b.structure &&
-      a.representation === b.representation &&
-      a.colorScheme === b.colorScheme
-  );
+  useAppStore((state) => ({
+    structure: state.structure,
+    representation: state.representation,
+    colorScheme: state.colorScheme,
+  }));

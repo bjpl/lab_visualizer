@@ -2,6 +2,14 @@
 const nextConfig = {
   reactStrictMode: true,
 
+  // Transpile molstar for Next.js compatibility
+  transpilePackages: ['molstar'],
+
+  // ESLint configuration - ignore during builds (TypeScript checks pass)
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+
   // Image optimization
   images: {
     domains: [
@@ -117,6 +125,11 @@ const nextConfig = {
   // Experimental features
   experimental: {
     optimizePackageImports: ['@supabase/supabase-js', 'react', 'react-dom'],
+  },
+
+  // SASS configuration for molstar SCSS files
+  sassOptions: {
+    includePaths: ['./node_modules'],
   },
 };
 

@@ -117,6 +117,7 @@ export interface ActivityEvent {
 export interface CameraState {
   position: [number, number, number];
   target: [number, number, number];
+  up?: [number, number, number];
   zoom: number;
   rotation: [number, number, number];
   fov?: number;

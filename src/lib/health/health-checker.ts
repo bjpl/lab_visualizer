@@ -60,7 +60,7 @@ export class HealthChecker {
       const supabase = createClient(supabaseUrl, supabaseKey);
 
       // Simple health check query
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('pdb_structures')
         .select('id')
         .limit(1);

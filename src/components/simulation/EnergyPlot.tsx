@@ -165,7 +165,7 @@ export default function EnergyPlot({
           <h3 className="text-lg font-semibold">Energy vs Time</h3>
           {stats && (
             <div className="text-sm text-gray-600">
-              Energy Drift: <span className={drift > 0 ? 'text-red-600' : 'text-green-600'}>
+              Energy Drift: <span className={stats.drift > 0 ? 'text-red-600' : 'text-green-600'}>
                 {stats.drift > 0 ? '+' : ''}{stats.drift.toFixed(2)} kJ/mol
               </span>
             </div>

@@ -36,7 +36,7 @@ export interface MolstarViewer {
  * Structure loading options
  */
 export interface LoadStructureOptions {
-  format?: 'pdb' | 'cif' | 'sdf' | 'mol2';
+  format?: 'pdb' | 'mmcif' | 'sdf' | 'mol2';
   label?: string;
   assemblyId?: string;
 }
@@ -84,6 +84,18 @@ export interface CameraSnapshot {
   target: [number, number, number];
   up: [number, number, number];
   fov: number;
+}
+
+/**
+ * Camera state for synchronization
+ */
+export interface CameraState {
+  position: [number, number, number];
+  target: [number, number, number];
+  up?: [number, number, number];
+  zoom: number;
+  rotation: [number, number, number];
+  fov?: number;
 }
 
 /**

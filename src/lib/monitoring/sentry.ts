@@ -48,16 +48,10 @@ export function initSentry(config?: Partial<SentryConfig>) {
     dsn: finalConfig.dsn,
     environment: finalConfig.environment,
 
-    // Performance Monitoring
+    // Performance Monitoring - using new Sentry v8 API
     integrations: [
-      new Sentry.BrowserTracing({
-        tracePropagationTargets: [
-          'localhost',
-          /^https:\/\/.*\.vercel\.app/,
-          /^https:\/\/lab-visualizer\./,
-        ],
-      }),
-      new Sentry.Replay({
+      Sentry.browserTracingIntegration(),
+      Sentry.replayIntegration({
         maskAllText: false,
         blockAllMedia: false,
         maskAllInputs: true,
@@ -183,12 +177,11 @@ export function addBreadcrumb(
 }
 
 /**
- * Start transaction for performance monitoring
+ * Start span for performance monitoring (Sentry v8 API)
  */
 export function startTransaction(name: string, op: string) {
-  return Sentry.startTransaction({
-    name,
-    op,
+  return Sentry.startSpan({ name, op }, () => {
+    // Span will be automatically finished when callback completes
   });
 }
 

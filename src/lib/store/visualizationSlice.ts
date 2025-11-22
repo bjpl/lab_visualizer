@@ -21,6 +21,8 @@ export type ColorScheme =
   | 'secondary-structure'
   | 'rainbow';
 
+export type DisplayOption = 'backbone' | 'sidechains' | 'ligands' | 'water';
+
 export interface VisualizationState {
   // Display settings
   representation: RepresentationType;
@@ -30,7 +32,7 @@ export interface VisualizationState {
   showSidechains: boolean;
   showLigands: boolean;
   showWater: boolean;
-  quality: 'low' | 'medium' | 'high';
+  quality: number;
 
   // Selection state
   selectedAtoms: string[];
@@ -44,13 +46,19 @@ export interface VisualizationState {
   setShowSidechains: (show: boolean) => void;
   setShowLigands: (show: boolean) => void;
   setShowWater: (show: boolean) => void;
-  setQuality: (quality: 'low' | 'medium' | 'high') => void;
+  setQuality: (quality: number) => void;
+  toggleDisplay: (option: DisplayOption) => void;
+  reset: () => void;
   resetSettings: () => void;
 
   // Selection actions
   setSelectedAtoms: (atoms: string[]) => void;
   clearSelection: () => void;
   focusOnSelection: () => void;
+
+  // Camera actions
+  resetCamera: () => void;
+  captureScreenshot: () => Promise<string>;
 }
 
 const defaultState = {
@@ -61,7 +69,7 @@ const defaultState = {
   showSidechains: false,
   showLigands: true,
   showWater: false,
-  quality: 'medium' as const,
+  quality: 3,
   selectedAtoms: [] as string[],
   selectionHistory: [] as string[],
 };
@@ -79,6 +87,21 @@ export const useVisualizationStore = create<VisualizationState>()(
       setShowLigands: (showLigands) => set({ showLigands }),
       setShowWater: (showWater) => set({ showWater }),
       setQuality: (quality) => set({ quality }),
+      toggleDisplay: (option) => set((state) => {
+        switch (option) {
+          case 'backbone':
+            return { showBackbone: !state.showBackbone };
+          case 'sidechains':
+            return { showSidechains: !state.showSidechains };
+          case 'ligands':
+            return { showLigands: !state.showLigands };
+          case 'water':
+            return { showWater: !state.showWater };
+          default:
+            return {};
+        }
+      }),
+      reset: () => set(defaultState),
       resetSettings: () => set(defaultState),
 
       // Selection actions
@@ -92,6 +115,16 @@ export const useVisualizationStore = create<VisualizationState>()(
       focusOnSelection: () => {
         // This will be implemented by the viewer component
         console.log('Focus on selection requested');
+      },
+      resetCamera: () => {
+        // This will be implemented by the viewer component
+        console.log('Reset camera requested');
+      },
+      captureScreenshot: async () => {
+        // This will be implemented by the viewer component
+        console.log('Capture screenshot requested');
+        // Return a placeholder data URL
+        return 'data:image/png;base64,';
       },
     }),
     {

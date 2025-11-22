@@ -3,7 +3,8 @@
  * Manages educational modules, pathways, and progress tracking
  */
 
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import { createClient } from '@/lib/supabase/client';
 import type { Database } from '@/types/database';
 import type {
   ILearningService,
@@ -22,17 +23,16 @@ import type {
 } from '@/types/learning';
 
 class LearningContentService implements ILearningService {
-  private supabase: SupabaseClient<Database>;
+  private _supabase: SupabaseClient<Database> | null = null;
 
-  constructor() {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-    if (!supabaseUrl || !supabaseAnonKey) {
-      throw new Error('Missing Supabase environment variables');
+  /**
+   * Lazy-load Supabase client to avoid issues during build
+   */
+  private get supabase(): SupabaseClient<Database> {
+    if (!this._supabase) {
+      this._supabase = createClient();
     }
-
-    this.supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
+    return this._supabase;
   }
 
   /**
@@ -40,7 +40,7 @@ class LearningContentService implements ILearningService {
    */
   async listModules(filters: ListModulesFilters = {}): Promise<LearningModule[]> {
     try {
-      let query = this.supabase
+      let query = (this.supabase as any)
         .from('learning_content')
         .select('*');
 
@@ -101,7 +101,7 @@ class LearningContentService implements ILearningService {
    */
   async getModule(id: string): Promise<LearningModule> {
     try {
-      const { data, error } = await this.supabase
+      const { data, error } = await (this.supabase as any)
         .from('learning_content')
         .select('*')
         .eq('id', id)
@@ -127,7 +127,7 @@ class LearningContentService implements ILearningService {
       const { data: { user } } = await this.supabase.auth.getUser();
       if (!user) throw this.createError('UNAUTHORIZED', 'Must be logged in to create modules');
 
-      const { data: module, error } = await this.supabase
+      const { data: module, error } = await (this.supabase as any)
         .from('learning_content')
         .insert({
           creator_id: user.id,
@@ -165,11 +165,11 @@ class LearningContentService implements ILearningService {
       if (!user) throw this.createError('UNAUTHORIZED', 'Must be logged in');
 
       // Check ownership
-      const { data: existing } = await this.supabase
+      const { data: existing } = await (this.supabase as any)
         .from('learning_content')
         .select('creator_id')
         .eq('id', id)
-        .single();
+        .single() as { data: { creator_id: string } | null };
 
       if (!existing) throw this.createError('NOT_FOUND', `Module ${id} not found`);
       if (existing.creator_id !== user.id) {
@@ -196,7 +196,7 @@ class LearningContentService implements ILearningService {
         }
       }
 
-      const { data: updated, error } = await this.supabase
+      const { data: updated, error } = await (this.supabase as any)
         .from('learning_content')
         .update(updateData)
         .eq('id', id)
@@ -221,18 +221,18 @@ class LearningContentService implements ILearningService {
       if (!user) throw this.createError('UNAUTHORIZED', 'Must be logged in');
 
       // Check ownership
-      const { data: existing } = await this.supabase
+      const { data: existing } = await (this.supabase as any)
         .from('learning_content')
         .select('creator_id')
         .eq('id', id)
-        .single();
+        .single() as { data: { creator_id: string } | null };
 
       if (!existing) throw this.createError('NOT_FOUND', `Module ${id} not found`);
       if (existing.creator_id !== user.id) {
         throw this.createError('PERMISSION_DENIED', 'You do not own this module');
       }
 
-      const { error } = await this.supabase
+      const { error } = await (this.supabase as any)
         .from('learning_content')
         .delete()
         .eq('id', id);
@@ -255,7 +255,7 @@ class LearningContentService implements ILearningService {
    */
   async listPathways(filters: { tags?: string[]; difficulty?: number } = {}): Promise<LearningPathway[]> {
     try {
-      let query = this.supabase
+      let query = (this.supabase as any)
         .from('learning_pathways')
         .select('*')
         .eq('is_published', true);
@@ -284,29 +284,29 @@ class LearningContentService implements ILearningService {
    */
   async getPathway(id: string): Promise<PathwayWithModules> {
     try {
-      const { data: pathway, error: pathwayError } = await this.supabase
+      const { data: pathway, error: pathwayError } = await (this.supabase as any)
         .from('learning_pathways')
         .select('*')
         .eq('id', id)
-        .single();
+        .single() as { data: Record<string, any> | null; error: Error | null };
 
       if (pathwayError || !pathway) {
         throw this.createError('NOT_FOUND', `Pathway ${id} not found`, pathwayError);
       }
 
       // Fetch all modules in the pathway
-      const { data: modules, error: modulesError } = await this.supabase
+      const { data: modules, error: modulesError } = await (this.supabase as any)
         .from('learning_content')
         .select('*')
-        .in('id', pathway.content_sequence);
+        .in('id', pathway.content_sequence) as { data: Record<string, any>[] | null; error: Error | null };
 
       if (modulesError) {
         throw this.createError('NETWORK_ERROR', modulesError.message, modulesError);
       }
 
       // Maintain order from content_sequence
-      const orderedModules = pathway.content_sequence
-        .map(id => modules?.find(m => m.id === id))
+      const orderedModules = (pathway.content_sequence as string[])
+        .map((id: string) => modules?.find((m: Record<string, any>) => m.id === id))
         .filter(Boolean)
         .map(this.mapToLearningModule);
 
@@ -315,17 +315,17 @@ class LearningContentService implements ILearningService {
       let userProgress: { completedModules: string[]; currentModule: string | null; overallProgress: number } | undefined;
 
       if (user) {
-        const { data: progress } = await this.supabase
+        const { data: progress } = await (this.supabase as any)
           .from('user_progress')
           .select('*')
           .eq('user_id', user.id)
-          .in('content_id', pathway.content_sequence);
+          .in('content_id', pathway.content_sequence) as { data: Record<string, any>[] | null };
 
         const completedModules = (progress || [])
-          .filter(p => p.completed)
-          .map(p => p.content_id);
+          .filter((p: Record<string, any>) => p.completed)
+          .map((p: Record<string, any>) => p.content_id);
 
-        const currentModule = pathway.content_sequence.find(id => !completedModules.includes(id)) || null;
+        const currentModule = (pathway.content_sequence as string[]).find((id: string) => !completedModules.includes(id)) || null;
         const overallProgress = (completedModules.length / pathway.content_sequence.length) * 100;
 
         userProgress = { completedModules, currentModule, overallProgress };
@@ -349,7 +349,7 @@ class LearningContentService implements ILearningService {
       const { data: { user } } = await this.supabase.auth.getUser();
       if (!user) throw this.createError('UNAUTHORIZED', 'Must be logged in');
 
-      const { data: pathway, error } = await this.supabase
+      const { data: pathway, error } = await (this.supabase as any)
         .from('learning_pathways')
         .insert({
           creator_id: user.id,
@@ -382,7 +382,7 @@ class LearningContentService implements ILearningService {
       const { data: { user } } = await this.supabase.auth.getUser();
       if (!user) throw this.createError('UNAUTHORIZED', 'Must be logged in');
 
-      const { data: updated, error } = await this.supabase
+      const { data: updated, error } = await (this.supabase as any)
         .from('learning_pathways')
         .update(data as any)
         .eq('id', id)
@@ -407,7 +407,7 @@ class LearningContentService implements ILearningService {
       const { data: { user } } = await this.supabase.auth.getUser();
       if (!user) throw this.createError('UNAUTHORIZED', 'Must be logged in');
 
-      const { error } = await this.supabase
+      const { error } = await (this.supabase as any)
         .from('learning_pathways')
         .delete()
         .eq('id', id)
@@ -427,7 +427,7 @@ class LearningContentService implements ILearningService {
       const { data: { user } } = await this.supabase.auth.getUser();
       if (!user) return null;
 
-      const { data, error } = await this.supabase
+      const { data, error } = await (this.supabase as any)
         .from('user_progress')
         .select('*')
         .eq('user_id', user.id)
@@ -480,7 +480,7 @@ class LearningContentService implements ILearningService {
         updateData.quiz_scores = [...scores, data.quizAttempt];
       }
 
-      const { data: progress, error } = await this.supabase
+      const { data: progress, error } = await (this.supabase as any)
         .from('user_progress')
         .upsert(updateData)
         .select()
@@ -505,7 +505,7 @@ class LearningContentService implements ILearningService {
 
       const pathway = await this.getPathway(pathwayId);
 
-      const { data, error } = await this.supabase
+      const { data, error } = await (this.supabase as any)
         .from('user_progress')
         .select('*')
         .eq('user_id', user.id)
@@ -527,7 +527,7 @@ class LearningContentService implements ILearningService {
       const { data: { user } } = await this.supabase.auth.getUser();
       if (!user) throw this.createError('UNAUTHORIZED', 'Must be logged in');
 
-      const { data: review, error } = await this.supabase
+      const { data: review, error } = await (this.supabase as any)
         .from('content_reviews')
         .insert({
           user_id: user.id,
@@ -552,7 +552,7 @@ class LearningContentService implements ILearningService {
    */
   async getReviews(contentId: string): Promise<ContentReview[]> {
     try {
-      const { data, error } = await this.supabase
+      const { data, error } = await (this.supabase as any)
         .from('content_reviews')
         .select('*')
         .eq('content_id', contentId)
@@ -573,7 +573,7 @@ class LearningContentService implements ILearningService {
     try {
       const module = await this.getModule(moduleId);
 
-      const { data, error } = await this.supabase
+      const { data, error } = await (this.supabase as any)
         .from('learning_content')
         .select('*')
         .overlaps('tags', module.tags)
@@ -595,7 +595,7 @@ class LearningContentService implements ILearningService {
    */
   async searchContent(query: string, filters: ListModulesFilters = {}): Promise<LearningModule[]> {
     try {
-      let dbQuery = this.supabase
+      let dbQuery = (this.supabase as any)
         .from('learning_content')
         .select('*')
         .or(`title.ilike.%${query}%,description.ilike.%${query}%`)
@@ -621,7 +621,7 @@ class LearningContentService implements ILearningService {
    * Helper: Increment view count
    */
   private async incrementViewCount(contentId: string): Promise<void> {
-    await this.supabase.rpc('increment', {
+    await (this.supabase as any).rpc('increment', {
       table_name: 'learning_content',
       column_name: 'view_count',
       row_id: contentId,
@@ -632,7 +632,7 @@ class LearningContentService implements ILearningService {
    * Helper: Increment completion count
    */
   private async incrementCompletionCount(contentId: string): Promise<void> {
-    await this.supabase.rpc('increment', {
+    await (this.supabase as any).rpc('increment', {
       table_name: 'learning_content',
       column_name: 'completion_count',
       row_id: contentId,

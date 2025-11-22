@@ -69,6 +69,7 @@ function molstarToCollabCamera(state: MolstarCameraState): CollabCameraState {
     target: state.target,
     up: state.up,
     zoom: state.zoom || 1,
+    rotation: state.rotation || [0, 0, 0],
     fov: state.fov || 45,
   };
 }
@@ -82,6 +83,7 @@ function collabToMolstarCamera(state: CollabCameraState): MolstarCameraState {
     target: state.target,
     up: state.up,
     zoom: state.zoom,
+    rotation: state.rotation,
     fov: state.fov,
   };
 }

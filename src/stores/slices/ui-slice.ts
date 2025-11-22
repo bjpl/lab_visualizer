@@ -112,12 +112,13 @@ export const createUISlice: StateCreator<
       state.notifications.push(newNotification);
 
       // Auto-remove after duration
-      if (newNotification.duration > 0) {
+      const duration = newNotification.duration ?? 5000;
+      if (duration > 0) {
         setTimeout(() => {
           set((state) => {
             state.notifications = state.notifications.filter((n) => n.id !== id);
           });
-        }, newNotification.duration);
+        }, duration);
       }
     }),
 

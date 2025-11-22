@@ -51,13 +51,13 @@ export function useSimulation(options: UseSimulationOptions): UseSimulationResul
   useEffect(() => {
     const fetchJob = async () => {
       try {
-        const jobData = await monitor.getJobStatus(jobId);
-        setJob(jobData as MDJob);
-        setStatus(jobData.status as JobStatus);
-        setProgress(jobData.progress || 0);
-        setEstimatedTimeRemaining(jobData.estimated_time_remaining || 0);
-        setTrajectoryUrl(jobData.result_url || null);
-        setEnergyUrl(jobData.energy_plot_url || null);
+        const jobData = await monitor.getJobStatus(jobId) as unknown as MDJob;
+        setJob(jobData);
+        setStatus(jobData.status);
+        setProgress((jobData as unknown as { progress?: number }).progress || 0);
+        setEstimatedTimeRemaining((jobData as unknown as { estimated_time_remaining?: number }).estimated_time_remaining || 0);
+        setTrajectoryUrl((jobData as unknown as { result_url?: string }).result_url || null);
+        setEnergyUrl((jobData as unknown as { energy_plot_url?: string }).energy_plot_url || null);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch job');
       }
@@ -203,7 +203,7 @@ export function useSimulationQuota(userId: string) {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        const { count, error } = await supabase
+        const { count, error } = await (supabase as any)
           .from('md_jobs')
           .select('*', { count: 'exact', head: true })
           .eq('user_id', userId)

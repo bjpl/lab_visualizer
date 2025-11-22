@@ -217,7 +217,7 @@ export function useCacheSettings() {
       enabled: true,
       maxConcurrent: 5,
       maxSize: 500 * 1024 * 1024,
-      strategies: ['popular', 'recent', 'related'],
+      strategies: ['popular', 'recent', 'related'] as ('popular' | 'recent' | 'related')[],
       networkAware: true,
       respectUserPrefs: true,
     };

@@ -8,7 +8,7 @@
 
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useMolstar } from '@/hooks/use-molstar';
 import { useVisualization } from '@/stores/app-store';
 import { createMolstarLODBridge } from '@/services/molstar-lod-bridge';
@@ -264,12 +264,10 @@ export const MolecularViewer: React.FC<MolecularViewerProps> = ({
    * Render error state
    */
   if (error) {
-    const ErrorComponent = errorComponent || DefaultError;
-    return typeof ErrorComponent === 'function' ? (
-      <ErrorComponent error={error} />
-    ) : (
-      ErrorComponent
-    );
+    if (errorComponent) {
+      return <>{errorComponent(error)}</>;
+    }
+    return <DefaultError error={error} />;
   }
 
   /**

@@ -1,6 +1,8 @@
 import { Moon, Sun, BookOpen, Brain, Zap } from 'lucide-react';
 import { useStore } from '../store/useStore';
-import { LearningMode } from '../types';
+
+// Define LearningMode inline since it's not exported from types
+type LearningMode = 'study' | 'quiz' | 'challenge';
 
 export const Header = () => {
   const { mode, setMode, isDarkMode, toggleDarkMode } = useStore();

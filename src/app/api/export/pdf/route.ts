@@ -9,7 +9,7 @@ import { PDFExportOptions } from '@/types/export';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { options, data } = body as {
+    const { options: _options, data } = body as {
       options: PDFExportOptions;
       data: {
         structureImage?: string; // Base64

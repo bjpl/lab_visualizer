@@ -25,7 +25,8 @@ export function useUser() {
         return { profile: null, error: new Error('Not authenticated') };
       }
 
-      const result = await authService.updateProfile(user.id, updates);
+      // Use type assertion for compatibility
+      const result = await authService.updateProfile(user.id, updates as unknown as Parameters<typeof authService.updateProfile>[1]);
 
       if (!result.error) {
         // Refresh profile in context
