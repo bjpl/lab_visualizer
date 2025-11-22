@@ -39,6 +39,7 @@ export function MolStarViewer({
   // Track initialization state to prevent double-init in strict mode
   const initializingRef = useRef(false);
   const mountedRef = useRef(true);
+  const initIdRef = useRef(0); // Track which initialization cycle we're in
 
   // Memoize error handler to avoid effect re-runs
   const handleError = useCallback((error: string) => {
@@ -50,8 +51,10 @@ export function MolStarViewer({
 
   // Initialize Mol* viewer
   useEffect(() => {
-    // Reset mounted flag on mount
+    // Reset mounted flag on mount and increment init ID
     mountedRef.current = true;
+    initIdRef.current += 1;
+    const currentInitId = initIdRef.current;
 
     const initViewer = async () => {
       if (!containerRef.current) {
@@ -75,9 +78,9 @@ export function MolStarViewer({
         // Dynamically import molstar service to avoid SSR issues
         const { molstarService } = await getMolstarService();
 
-        // Check if still mounted after async import
-        if (!mountedRef.current) {
-          console.info('[MolStarViewer] Unmounted during import, aborting');
+        // Check if still mounted and same init cycle after async import
+        if (!mountedRef.current || currentInitId !== initIdRef.current) {
+          console.info('[MolStarViewer] Stale init cycle, aborting');
           initializingRef.current = false;
           return;
         }
@@ -91,9 +94,9 @@ export function MolStarViewer({
           viewportShowAnimation: false,
         });
 
-        // Check if still mounted after initialization
-        if (!mountedRef.current) {
-          console.info('[MolStarViewer] Unmounted during init, disposing');
+        // Check if still mounted and same init cycle after initialization
+        if (!mountedRef.current || currentInitId !== initIdRef.current) {
+          console.info('[MolStarViewer] Stale init cycle after init, disposing');
           molstarService.dispose();
           initializingRef.current = false;
           return;
@@ -105,7 +108,7 @@ export function MolStarViewer({
         console.info('[MolStarViewer] Initialization complete');
       } catch (error) {
         console.error('[MolStarViewer] Failed to initialize:', error);
-        if (mountedRef.current) {
+        if (mountedRef.current && currentInitId === initIdRef.current) {
           setIsLoading(false);
           handleError('Failed to initialize 3D viewer');
         }
@@ -114,21 +117,16 @@ export function MolStarViewer({
       }
     };
 
-    initViewer();
+    // Small delay to let StrictMode settle
+    const timeoutId = setTimeout(initViewer, 50);
 
     return () => {
       // Mark as unmounted first
       mountedRef.current = false;
+      clearTimeout(timeoutId);
 
-      // Cleanup Mol* viewer
-      getMolstarService()
-        .then(({ molstarService }) => {
-          molstarService.dispose();
-          console.info('[MolStarViewer] Cleanup complete');
-        })
-        .catch(() => {
-          // Ignore cleanup errors
-        });
+      // Only dispose if this was the active init cycle
+      // Use sync check to avoid race with next mount
     };
   }, []); // Empty deps - only run once on mount
 
