@@ -77,3 +77,6 @@ coordination/orchestration/*
 *.sqlite-wal
 claude-flow
 hive-mind-prompt-*.txt
+# Local development artifacts
+completion_reports/
+prompts/
