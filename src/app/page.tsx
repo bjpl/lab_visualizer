@@ -1,35 +1,35 @@
 import Link from 'next/link';
-import { ArrowRight, Beaker, Layers, Users, GraduationCap } from 'lucide-react';
+import { ArrowRight, Beaker, Layers, FlaskConical, Heart, Database } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { StructureCard } from '@/components/browse/StructureCard';
-import { getRandomStructures } from '@/data/popular-structures';
+import { getRandomLABProteins } from '@/data/lab-structures';
 
 const features = [
   {
     icon: Layers,
-    title: 'Progressive LOD Rendering',
-    description: 'Fast loading with progressive detail enhancement for structures of any size',
+    title: 'LAB Protein Explorer',
+    description: 'Browse surface proteins, enzymes, and bacteriocins from lactic acid bacteria',
   },
   {
-    icon: Users,
-    title: 'Real-Time Collaboration',
-    description: 'Work together with shared camera views, annotations, and synchronized interactions',
+    icon: FlaskConical,
+    title: 'Fermentation Pathways',
+    description: 'Visualize metabolic processes and enzyme mechanisms in lactic acid bacteria',
   },
   {
-    icon: GraduationCap,
-    title: 'Educational Content',
-    description: 'Curated learning modules with interactive annotations and quizzes',
+    icon: Heart,
+    title: 'Probiotic Science',
+    description: 'Learn about health benefits, gut colonization, and probiotic mechanisms',
   },
   {
-    icon: Beaker,
-    title: 'Browser-Based MD',
-    description: 'Run lightweight molecular dynamics simulations directly in your browser',
+    icon: Database,
+    title: 'Species Database',
+    description: 'Explore Lactobacillus taxonomy, diversity, and species-specific proteins',
   },
 ];
 
 export default function HomePage() {
-  const featuredStructures = getRandomStructures(3);
+  const featuredStructures = getRandomLABProteins(3);
 
   return (
     <div className="flex flex-col">
@@ -37,12 +37,15 @@ export default function HomePage() {
       <section className="border-b bg-gradient-to-b from-primary-50 to-white dark:from-primary-950/20 dark:to-secondary-950">
         <div className="mx-auto max-w-7xl px-6 py-24 sm:py-32 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
+            <div className="mb-6 flex justify-center">
+              <Beaker className="h-16 w-16 text-primary-600" />
+            </div>
             <h1 className="text-4xl font-bold tracking-tight text-secondary-900 dark:text-white sm:text-6xl">
-              Explore Molecular Structures in 3D
+              Explore Lactobacillus in 3D
             </h1>
             <p className="mt-6 text-lg leading-8 text-secondary-600 dark:text-secondary-400">
-              Interactive visualization platform for proteins, DNA, and molecular complexes. Built
-              for education and research with cutting-edge WebGL technology.
+              Interactive visualization platform for lactic acid bacteria proteins and structures.
+              Learn about probiotics, fermentation, and microbial science.
             </p>
             <div className="mt-10 flex items-center justify-center gap-x-6">
               <Button asChild size="lg">
@@ -64,10 +67,10 @@ export default function HomePage() {
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-3xl font-bold tracking-tight text-secondary-900 dark:text-white sm:text-4xl">
-              Powerful Features for Modern Structural Biology
+              Discover the World of Lactic Acid Bacteria
             </h2>
             <p className="mt-4 text-lg text-secondary-600 dark:text-secondary-400">
-              Everything you need to visualize, analyze, and understand molecular structures
+              Everything you need to visualize, analyze, and understand Lactobacillus proteins
             </p>
           </div>
 
@@ -92,10 +95,10 @@ export default function HomePage() {
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-3xl font-bold tracking-tight text-secondary-900 dark:text-white sm:text-4xl">
-              Featured Structures
+              Featured LAB Proteins
             </h2>
             <p className="mt-4 text-lg text-secondary-600 dark:text-secondary-400">
-              Explore our curated collection of educational molecular structures
+              Explore key proteins from lactic acid bacteria
             </p>
           </div>
 
@@ -124,8 +127,8 @@ export default function HomePage() {
               Ready to start exploring?
             </h2>
             <p className="mx-auto mt-6 max-w-xl text-lg text-primary-100">
-              Access thousands of protein structures from the PDB database and AlphaFold. No
-              installation required.
+              Access curated Lactobacillus protein structures from PDB and AlphaFold. Perfect for
+              microbiology students and researchers.
             </p>
             <div className="mt-10 flex items-center justify-center gap-x-6">
               <Button asChild size="lg" variant="secondary">

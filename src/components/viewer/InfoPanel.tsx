@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { ExternalLink, Download, Info } from 'lucide-react';
+import { useEffect, useState, useMemo } from 'react';
+import { ExternalLink, Download, Info, Leaf, FlaskConical, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -11,6 +11,12 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import {
+  getLABProteinById,
+  getLABProteinsByCategory,
+  getLABSpeciesById,
+  getLABCategoryById,
+} from '@/data/lab-structures';
 
 interface InfoPanelProps {
   pdbId?: string;
@@ -31,6 +37,29 @@ interface StructureMetadata {
 export function InfoPanel({ pdbId }: InfoPanelProps) {
   const [metadata, setMetadata] = useState<StructureMetadata | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Check if current structure is a LAB protein
+  const labProtein = useMemo(() => {
+    return pdbId ? getLABProteinById(pdbId) : null;
+  }, [pdbId]);
+
+  // Get species info for LAB protein
+  const labSpecies = useMemo(() => {
+    return labProtein?.species ? getLABSpeciesById(labProtein.species) : null;
+  }, [labProtein]);
+
+  // Get category info for LAB protein
+  const labCategory = useMemo(() => {
+    return labProtein?.category ? getLABCategoryById(labProtein.category) : null;
+  }, [labProtein]);
+
+  // Get related LAB proteins from the same category (excluding current)
+  const relatedProteins = useMemo(() => {
+    if (!labProtein?.category) return [];
+    return getLABProteinsByCategory(labProtein.category)
+      .filter(p => p.pdbId !== labProtein.pdbId)
+      .slice(0, 3);
+  }, [labProtein]);
 
   useEffect(() => {
     if (!pdbId) return;
@@ -97,7 +126,115 @@ export function InfoPanel({ pdbId }: InfoPanelProps) {
         </p>
       </div>
 
-      <Accordion type="single" collapsible defaultValue="metadata">
+      {/* LAB Protein Info Section */}
+      {labProtein && (
+        <div
+          className="rounded-lg border border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 p-4 dark:border-green-800 dark:from-green-950/30 dark:to-emerald-950/30"
+          role="region"
+          aria-label="LAB protein information"
+        >
+          <div className="mb-3 flex items-center gap-2">
+            <Leaf className="h-5 w-5 text-green-600 dark:text-green-400" />
+            <h4 className="font-semibold text-green-800 dark:text-green-300">LAB Protein</h4>
+          </div>
+
+          {/* Species Badge */}
+          {labSpecies && (
+            <div className="mb-3">
+              <p className="mb-1 text-xs font-medium uppercase tracking-wide text-green-700 dark:text-green-400">
+                Species
+              </p>
+              <Badge
+                variant="secondary"
+                className="border-green-300 bg-green-100 text-green-800 dark:border-green-700 dark:bg-green-900/50 dark:text-green-300"
+              >
+                <span className="italic">{labSpecies.scientificName}</span>
+              </Badge>
+              <p className="mt-1 text-xs text-green-600 dark:text-green-400">
+                {labSpecies.commonName} - {labSpecies.fermentationType}
+              </p>
+            </div>
+          )}
+
+          {/* Protein Function */}
+          <div className="mb-3">
+            <div className="mb-1 flex items-center gap-1">
+              <FlaskConical className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
+              <p className="text-xs font-medium uppercase tracking-wide text-green-700 dark:text-green-400">
+                Function
+              </p>
+            </div>
+            <p className="text-sm text-green-800 dark:text-green-200">
+              {labProtein.function}
+            </p>
+            {labCategory && (
+              <Badge
+                variant="outline"
+                className="mt-2 border-green-300 text-green-700 dark:border-green-700 dark:text-green-300"
+              >
+                {labCategory.icon} {labCategory.name}
+              </Badge>
+            )}
+          </div>
+
+          {/* Educational Value */}
+          <div className="mb-3">
+            <div className="mb-1 flex items-center gap-1">
+              <BookOpen className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
+              <p className="text-xs font-medium uppercase tracking-wide text-green-700 dark:text-green-400">
+                Educational Value
+              </p>
+            </div>
+            <p className="text-sm leading-relaxed text-green-800 dark:text-green-200">
+              {labProtein.educationalValue}
+            </p>
+          </div>
+
+          {/* Related LAB Proteins */}
+          {relatedProteins.length > 0 && (
+            <div>
+              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-green-700 dark:text-green-400">
+                Related LAB Proteins
+              </p>
+              <div className="space-y-1.5">
+                {relatedProteins.map((protein) => (
+                  <div
+                    key={protein.pdbId}
+                    className="flex items-center justify-between rounded border border-green-200 bg-white/50 px-2.5 py-1.5 text-xs dark:border-green-800 dark:bg-green-950/30"
+                  >
+                    <span className="font-medium text-green-800 dark:text-green-300 truncate flex-1 mr-2">
+                      {protein.name}
+                    </span>
+                    <Badge
+                      variant="outline"
+                      className="shrink-0 border-green-300 font-mono text-green-700 dark:border-green-700 dark:text-green-300"
+                    >
+                      {protein.pdbId}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Tags */}
+          {labProtein.tags && labProtein.tags.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-1">
+              {labProtein.tags.slice(0, 5).map((tag) => (
+                <Badge
+                  key={tag}
+                  variant="outline"
+                  className="border-green-200 bg-white/50 text-xs text-green-600 dark:border-green-800 dark:bg-green-950/50 dark:text-green-400"
+                >
+                  {tag}
+                </Badge>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      <Accordion type="single" collapsible defaultValue={labProtein ? "lab-info" : "metadata"}>
         {/* Metadata */}
         <AccordionItem value="metadata">
           <AccordionTrigger>Metadata</AccordionTrigger>
