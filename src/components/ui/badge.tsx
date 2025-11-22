@@ -13,8 +13,8 @@ function Badge({ className, variant = 'default', ...props }: BadgeProps) {
         'focus:outline-none focus:ring-2 focus:ring-offset-2',
         {
           'border-transparent bg-primary-600 text-white': variant === 'default',
-          'border-transparent bg-secondary-200 text-secondary-900': variant === 'secondary',
-          'text-secondary-900': variant === 'outline',
+          'border-transparent bg-secondary-200 text-secondary-700 dark:bg-secondary-700 dark:text-secondary-200': variant === 'secondary',
+          'border-secondary-300 text-secondary-700 dark:border-secondary-600 dark:text-secondary-300': variant === 'outline',
           'border-transparent bg-red-600 text-white': variant === 'destructive',
         },
         className
