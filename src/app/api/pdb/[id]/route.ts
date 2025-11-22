@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchPDB, isValidPDBId, normalizePDBId } from '@/services/pdb-fetcher';
 import { parsePDB } from '@/lib/pdb-parser';
-import { cacheService } from '@/services/cache-service';
+// Cache service import removed - caching disabled in demo mode
 
 export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
@@ -83,42 +83,9 @@ export async function GET(
     const requestPromise = (async (): Promise<Response> => {
       try {
         // Multi-tier cache check
-        const cacheKey = `pdb:${pdbId}`;
-
-        // L1: Check IndexedDB (client-side, not accessible from server)
-        // Skip for server-side
-
-        // L2: Check Vercel KV
-        const cachedL2 = await cacheService.get(cacheKey, 'l2');
-        if (cachedL2) {
-          console.log(`Cache hit (L2) for ${pdbId}`);
-          return NextResponse.json({
-            ...cachedL2,
-            cached: true,
-            cacheLevel: 'l2',
-            fetchTime: Date.now() - startTime,
-            deduplicated: false
-          });
-        }
-
-        // L3: Check Supabase Storage
-        const cachedL3 = await cacheService.get(cacheKey, 'l3');
-        if (cachedL3) {
-          console.log(`Cache hit (L3) for ${pdbId}`);
-
-          // Warm L2 cache
-          await cacheService.set(cacheKey, cachedL3, { level: 'l2', ttl: 7 * 24 * 60 * 60 });
-
-          return NextResponse.json({
-            ...cachedL3,
-            cached: true,
-            cacheLevel: 'l3',
-            fetchTime: Date.now() - startTime,
-            deduplicated: false
-          });
-        }
-
-        console.log(`Cache miss for ${pdbId}, fetching from external API`);
+        // Note: L2/L3 caching requires external infrastructure (Vercel KV, Supabase)
+        // which is not configured in demo mode. Skipping cache check.
+        console.log(`Fetching ${pdbId} from external API (caching disabled in demo mode)`);
 
     // If streaming, use SSE
     if (enableProgress) {
@@ -148,11 +115,7 @@ export async function GET(
               }
             });
 
-            // Cache at all levels
-            await Promise.all([
-              cacheService.set(cacheKey, structure, { level: 'l2', ttl: 7 * 24 * 60 * 60 }),
-              cacheService.set(cacheKey, structure, { level: 'l3', ttl: 30 * 24 * 60 * 60 })
-            ]);
+            // Cache disabled in demo mode - no external infrastructure
 
             // Send final result
             controller.enqueue(
@@ -189,11 +152,7 @@ export async function GET(
         const fetchResult = await fetchPDB(pdbId);
         const structure = await parsePDB(fetchResult.content);
 
-        // Cache at all levels
-        await Promise.all([
-          cacheService.set(cacheKey, structure, { level: 'l2', ttl: 7 * 24 * 60 * 60 }),
-          cacheService.set(cacheKey, structure, { level: 'l3', ttl: 30 * 24 * 60 * 60 })
-        ]);
+        // Cache disabled in demo mode - no external infrastructure
 
         return NextResponse.json({
           ...structure,

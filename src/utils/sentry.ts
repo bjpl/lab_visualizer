@@ -11,7 +11,7 @@ import type { BrowserOptions } from '@sentry/react';
  * Initialize Sentry error tracking
  */
 export function initSentry() {
-  const dsn = import.meta.env.VITE_SENTRY_DSN;
+  const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
 
   if (!dsn) {
     console.warn('[Sentry] DSN not configured, error tracking disabled');
@@ -22,7 +22,7 @@ export function initSentry() {
   /*
   Sentry.init({
     dsn,
-    environment: import.meta.env.VITE_SENTRY_ENVIRONMENT || 'development',
+    environment: process.env.NEXT_PUBLIC_SENTRY_ENVIRONMENT || 'development',
     integrations: [
       new Sentry.BrowserTracing({
         tracePropagationTargets: ['localhost', /^https:\/\/lab-visualizer\.vercel\.app/],
@@ -32,8 +32,8 @@ export function initSentry() {
         blockAllMedia: false,
       }),
     ],
-    tracesSampleRate: import.meta.env.PROD ? 0.1 : 1.0,
-    replaysSessionSampleRate: import.meta.env.PROD ? 0.1 : 1.0,
+    tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
+    replaysSessionSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
     replaysOnErrorSampleRate: 1.0,
     beforeSend(event, hint) {
       // Filter out known non-critical errors
@@ -55,7 +55,7 @@ export function initSentry() {
  * Manually capture error
  */
 export function captureError(error: Error, context?: Record<string, any>) {
-  if (import.meta.env.DEV) {
+  if (process.env.NODE_ENV === 'development') {
     console.error('[Error]', error, context);
     return;
   }

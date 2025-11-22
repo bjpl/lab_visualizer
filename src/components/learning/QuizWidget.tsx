@@ -47,7 +47,7 @@ export function QuizWidget({ quiz, onComplete }: QuizWidgetProps) {
     questions.forEach((question) => {
       const userAnswer = answers[question.id];
       const isCorrect = Array.isArray(question.correctAnswer)
-        ? JSON.stringify(userAnswer?.sort()) === JSON.stringify(question.correctAnswer.sort())
+        ? Array.isArray(userAnswer) && JSON.stringify([...userAnswer].sort()) === JSON.stringify([...question.correctAnswer].sort())
         : userAnswer === question.correctAnswer;
 
       if (isCorrect) {

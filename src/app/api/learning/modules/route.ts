@@ -18,18 +18,32 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
 
-    const filters: ListModulesFilters = {
-      contentType: searchParams.get('contentType') as any,
-      difficulty: searchParams.get('difficulty') ? parseInt(searchParams.get('difficulty')!) as any : undefined,
-      tags: searchParams.get('tags')?.split(',').filter(Boolean),
-      structureId: searchParams.get('structureId') || undefined,
-      creatorId: searchParams.get('creatorId') || undefined,
-      isPublished: searchParams.get('isPublished') === 'true' ? true : searchParams.get('isPublished') === 'false' ? false : undefined,
+    // Build filters object with only defined values to satisfy exactOptionalPropertyTypes
+    const filters = {
       limit: searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 20,
       offset: searchParams.get('offset') ? parseInt(searchParams.get('offset')!) : 0,
-      sortBy: searchParams.get('sortBy') as any || 'created',
-      sortOrder: searchParams.get('sortOrder') as any || 'desc',
-    };
+      sortBy: (searchParams.get('sortBy') || 'created') as ListModulesFilters['sortBy'],
+      sortOrder: (searchParams.get('sortOrder') || 'desc') as ListModulesFilters['sortOrder'],
+    } as ListModulesFilters;
+
+    const contentType = searchParams.get('contentType');
+    if (contentType) filters.contentType = contentType as any;
+
+    const difficulty = searchParams.get('difficulty');
+    if (difficulty) filters.difficulty = parseInt(difficulty) as any;
+
+    const tagsParam = searchParams.get('tags');
+    if (tagsParam) filters.tags = tagsParam.split(',').filter(Boolean);
+
+    const structureId = searchParams.get('structureId');
+    if (structureId) filters.structureId = structureId;
+
+    const creatorId = searchParams.get('creatorId');
+    if (creatorId) filters.creatorId = creatorId;
+
+    const isPublished = searchParams.get('isPublished');
+    if (isPublished === 'true') filters.isPublished = true;
+    else if (isPublished === 'false') filters.isPublished = false;
 
     const modules = await learningContentService.listModules(filters);
 

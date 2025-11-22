@@ -147,7 +147,10 @@ export class ConflictResolutionService {
     remote: Annotation
   ): ConflictResolution<Annotation> {
     // For annotations, use merge strategy
-    const resolution = this.mergeUpdates(local, remote);
+    const resolution = this.mergeUpdates(
+      local as unknown as OptimisticUpdate<Record<string, unknown>>,
+      remote as unknown as Record<string, unknown>
+    ) as unknown as ConflictResolution<Annotation>;
 
     // Special handling for content - prefer newer timestamp
     if (

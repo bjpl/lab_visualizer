@@ -41,10 +41,11 @@ export async function POST(request: NextRequest) {
     };
 
     // Return image with appropriate headers
+    const contentType = contentTypes[options.format] || 'application/octet-stream';
     return new NextResponse(buffer, {
       status: 200,
       headers: {
-        'Content-Type': contentTypes[options.format],
+        'Content-Type': contentType,
         'Content-Disposition': `attachment; filename="export.${options.format}"`,
         'Cache-Control': 'no-store'
       }

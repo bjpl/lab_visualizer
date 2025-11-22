@@ -115,7 +115,7 @@ export class SimulationMonitor {
   private startPolling(jobId: string): void {
     this.pollingInterval = setInterval(async () => {
       try {
-        const { data: job, error } = await this.supabase
+        const { data: job, error } = await (this.supabase as any)
           .from('md_jobs')
           .select('*')
           .eq('id', jobId)
@@ -184,8 +184,8 @@ export class SimulationMonitor {
   /**
    * Get current job status from database
    */
-  async getJobStatus(jobId: string) {
-    const { data, error } = await this.supabase
+  async getJobStatus(jobId: string): Promise<Record<string, unknown>> {
+    const { data, error } = await (this.supabase as any)
       .from('md_jobs')
       .select('*')
       .eq('id', jobId)
@@ -195,7 +195,7 @@ export class SimulationMonitor {
       throw new Error(`Failed to fetch job status: ${error.message}`);
     }
 
-    return data;
+    return data as Record<string, unknown>;
   }
 
   /**
@@ -237,7 +237,7 @@ export class SimulationMonitor {
    * Cancel running simulation
    */
   async cancelSimulation(jobId: string): Promise<void> {
-    const { error } = await this.supabase
+    const { error } = await (this.supabase as any)
       .from('md_jobs')
       .update({
         status: 'cancelled',

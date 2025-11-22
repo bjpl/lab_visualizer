@@ -116,9 +116,9 @@ export class AuthService {
         return { user: null, session: null, error: authError };
       }
 
-      // Create user profile (handled by database trigger or separate call)
+      // Create user profile (using type assertion for demo mode compatibility)
       if (authData.user) {
-        const { error: profileError } = await this.supabase
+        const { error: profileError } = await (this.supabase as any)
           .from('user_profiles')
           .insert({
             id: authData.user.id,
@@ -165,7 +165,7 @@ export class AuthService {
 
       // Update last login timestamp
       if (authData.user) {
-        await this.supabase
+        await (this.supabase as any)
           .from('user_profiles')
           .update({ last_login: new Date().toISOString() })
           .eq('id', authData.user.id);
@@ -269,7 +269,7 @@ export class AuthService {
         },
       });
 
-      return { error, url: authData.url };
+      return { error, url: authData.url ?? undefined };
     } catch (error) {
       return { error: error as AuthError };
     }
@@ -304,7 +304,7 @@ export class AuthService {
    */
   async getUserProfile(userId: string) {
     try {
-      const { data, error } = await this.supabase
+      const { data, error } = await (this.supabase as any)
         .from('user_profiles')
         .select('*')
         .eq('id', userId)
@@ -321,7 +321,7 @@ export class AuthService {
    */
   async updateProfile(userId: string, profileData: Partial<ProfileData>) {
     try {
-      const { data, error } = await this.supabase
+      const { data, error } = await (this.supabase as any)
         .from('user_profiles')
         .update(profileData)
         .eq('id', userId)

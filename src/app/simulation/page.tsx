@@ -5,7 +5,7 @@
 
 'use client';
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { Card } from '../../components/ui/card';
 import SimulationPresets from '../../components/simulation/SimulationPresets';
 import SimulationControls from '../../components/simulation/SimulationControls';
@@ -17,7 +17,6 @@ import {
   SimulationControls as ControlsState,
   ForceFieldConfig,
   EnergyPlotData,
-  SIMULATION_PRESETS
 } from '../../types/simulation';
 import { SimulationFrame } from '../../lib/md-browser-dynamica';
 
@@ -58,10 +57,14 @@ export default function SimulationPage() {
   });
 
   // Mock positions for demo (replace with actual structure data)
-  const mockPositions = new Float32Array(300 * 3); // 100 atoms
-  for (let i = 0; i < mockPositions.length; i++) {
-    mockPositions[i] = Math.random() * 10 - 5;
-  }
+  // Use useMemo to avoid calling Math.random() during render
+  const mockPositions = useMemo(() => {
+    const positions = new Float32Array(300 * 3); // 100 atoms
+    for (let i = 0; i < positions.length; i++) {
+      positions[i] = Math.random() * 10 - 5;
+    }
+    return positions;
+  }, []);
 
   // Handle preset selection
   const handlePresetSelect = useCallback((preset: SimulationPreset) => {
@@ -204,9 +207,7 @@ export default function SimulationPage() {
 
       {/* Preset Selection */}
       <SimulationPresets
-        presets={SIMULATION_PRESETS}
-        selectedPreset={selectedPreset}
-        onSelect={handlePresetSelect}
+        onSelectPreset={handlePresetSelect as any}
       />
 
       {/* Main Content Grid */}

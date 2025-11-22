@@ -4,6 +4,8 @@
 
 import SignupForm from '@/components/auth/SignupForm';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: 'Sign Up - LAB Visualization Platform',
   description: 'Create your LAB Visualization account',

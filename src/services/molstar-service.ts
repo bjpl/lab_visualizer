@@ -4,15 +4,24 @@
  * Provides a high-level API for Mol* viewer integration
  * Handles initialization, structure loading, representation changes,
  * and performance optimization.
+ *
+ * NOTE: This module should only be imported client-side due to browser dependencies.
  */
 
 import { createPluginUI } from 'molstar/lib/mol-plugin-ui';
+import { renderReact18 } from 'molstar/lib/mol-plugin-ui/react18';
 import { DefaultPluginUISpec, PluginUISpec } from 'molstar/lib/mol-plugin-ui/spec';
 import { PluginContext } from 'molstar/lib/mol-plugin/context';
 import { PluginCommands } from 'molstar/lib/mol-plugin/commands';
 import { StateTransforms } from 'molstar/lib/mol-plugin-state/transforms';
 import { PluginConfig } from 'molstar/lib/mol-plugin/config';
-import 'molstar/lib/mol-plugin-ui/skin/light.scss';
+import { Color } from 'molstar/lib/mol-util/color';
+
+// Import SCSS only in browser environment
+if (typeof window !== 'undefined') {
+  // @ts-expect-error - SCSS modules don't have type declarations
+  import('molstar/lib/mol-plugin-ui/skin/light.scss');
+}
 
 import type {
   MolstarConfig,
@@ -61,14 +70,29 @@ export class MolstarService {
   }
 
   /**
+   * Check if viewer is initialized
+   */
+  public isInitialized(): boolean {
+    return this.viewer !== null;
+  }
+
+  /**
    * Initialize Mol* viewer
    */
   public async initialize(
     container: HTMLDivElement,
     config: MolstarConfig = {}
   ): Promise<void> {
+    // If already initialized with same container, skip
+    if (this.viewer && this.container === container) {
+      console.info('[MolstarService] Already initialized with same container, skipping');
+      return;
+    }
+
+    // If initialized with different container, dispose first
     if (this.viewer) {
-      throw new Error('Mol* viewer already initialized');
+      console.info('[MolstarService] Disposing existing viewer before re-initialization');
+      this.dispose();
     }
 
     const startTime = performance.now();
@@ -87,7 +111,7 @@ export class MolstarService {
         },
         canvas3d: {
           renderer: {
-            backgroundColor: 0xffffff,
+            backgroundColor: Color(0xffffff),
             pickingAlphaThreshold: 0.5,
           },
           camera: {
@@ -108,6 +132,7 @@ export class MolstarService {
       const plugin = await createPluginUI({
         target: container,
         spec,
+        render: renderReact18,
       });
 
       this.viewer = {
@@ -267,7 +292,7 @@ export class MolstarService {
 
       // Get structure
       const structures = state.selectQ((q) =>
-        q.ofType(StateTransforms.Model.StructureFromModel)
+        q.ofTransformer(StateTransforms.Model.StructureFromModel)
       );
 
       if (structures.length === 0) {
@@ -275,7 +300,8 @@ export class MolstarService {
       }
 
       // Map representation types
-      const typeMap: Record<MolstarRepresentationType, string> = {
+      type MolstarBuiltInType = 'cartoon' | 'ball-and-stick' | 'spacefill' | 'molecular-surface' | 'backbone' | 'point' | 'putty';
+      const typeMap: Record<MolstarRepresentationType, MolstarBuiltInType> = {
         cartoon: 'cartoon',
         'ball-and-stick': 'ball-and-stick',
         spacefill: 'spacefill',
@@ -287,11 +313,11 @@ export class MolstarService {
 
       // Create new representation
       await plugin.builders.structure.representation.addRepresentation(structures[0], {
-        type: typeMap[options.type] || 'cartoon',
+        type: typeMap[options.type] ?? 'cartoon',
         color: options.colorScheme || 'chain-id',
         quality: options.quality || 'auto',
         alpha: options.alpha ?? 1.0,
-      });
+      } as any);
 
       const renderTime = performance.now() - startTime;
       this.performanceMetrics.renderTime = renderTime;
@@ -323,7 +349,7 @@ export class MolstarService {
       );
 
       for (const repr of reprs) {
-        const update = state.build().to(repr).update({ color: scheme });
+        const update = state.build().to(repr).update({ colorTheme: { name: scheme } } as any);
         await PluginCommands.State.Update(plugin, { state, tree: update });
       }
 
@@ -349,7 +375,7 @@ export class MolstarService {
 
       // Get structure reference
       const structures = state.selectQ((q) =>
-        q.ofType(StateTransforms.Model.StructureFromModel)
+        q.ofTransformer(StateTransforms.Model.StructureFromModel)
       );
 
       if (structures.length === 0) {
@@ -357,30 +383,26 @@ export class MolstarService {
       }
 
       // Build Mol* selection query based on query type
+      // Note: Using any cast due to molstar API type complexities
+      const selectionManager = plugin.managers.structure.selection as any;
       let expression: any;
 
       switch (query.type) {
         case 'atom':
           if (query.atomIds && query.atomIds.length > 0) {
-            expression = plugin.managers.structure.selection.fromExpression(
-              `@${query.atomIds.join(',')}`
-            );
+            expression = `@${query.atomIds.join(',')}`;
           }
           break;
 
         case 'residue':
           if (query.residueIds && query.residueIds.length > 0) {
-            expression = plugin.managers.structure.selection.fromExpression(
-              `${query.residueIds.join(',')}`
-            );
+            expression = `${query.residueIds.join(',')}`;
           }
           break;
 
         case 'chain':
           if (query.chainIds && query.chainIds.length > 0) {
-            expression = plugin.managers.structure.selection.fromExpression(
-              `chain ${query.chainIds.join(',')}`
-            );
+            expression = `chain ${query.chainIds.join(',')}`;
           }
           break;
 
@@ -388,8 +410,8 @@ export class MolstarService {
           throw new Error(`Unknown selection type: ${query.type}`);
       }
 
-      if (expression) {
-        await plugin.managers.structure.selection.fromExpression(expression);
+      if (expression && selectionManager.fromExpression) {
+        await selectionManager.fromExpression(expression);
       }
 
       this.emit('selection-changed', query);
@@ -480,14 +502,37 @@ export class MolstarService {
    */
   public dispose(): void {
     if (this.viewer) {
-      this.viewer.dispose();
+      try {
+        this.viewer.dispose();
+      } catch (error) {
+        console.warn('[MolstarService] Error during disposal:', error);
+      }
       this.viewer = null;
     }
 
     this.eventListeners.clear();
     this.container = null;
 
+    // Reset performance metrics
+    this.performanceMetrics = {
+      loadTime: 0,
+      renderTime: 0,
+      frameRate: 0,
+      atomCount: 0,
+      triangleCount: 0,
+    };
+
     console.info('[MolstarService] Disposed');
+  }
+
+  /**
+   * Reset singleton instance (for testing or full reinitialization)
+   */
+  public static resetInstance(): void {
+    if (MolstarService.instance) {
+      MolstarService.instance.dispose();
+      MolstarService.instance = null;
+    }
   }
 
   /**

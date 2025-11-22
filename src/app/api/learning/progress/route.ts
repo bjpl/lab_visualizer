@@ -41,13 +41,12 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    if (pathwayId) {
-      const progress = await learningContentService.getPathwayProgress(pathwayId);
-      return NextResponse.json({
-        success: true,
-        data: progress,
-      });
-    }
+    // pathwayId is guaranteed to exist at this point due to the check above
+    const progress = await learningContentService.getPathwayProgress(pathwayId!);
+    return NextResponse.json({
+      success: true,
+      data: progress,
+    });
   } catch (error: any) {
     console.error('Error getting progress:', error);
 
