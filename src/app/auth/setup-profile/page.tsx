@@ -5,6 +5,8 @@
 
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
@@ -34,10 +36,10 @@ export default function SetupProfilePage() {
     }
 
     // Pre-fill display name from user metadata if available
-    if (user.user_metadata?.full_name) {
+    if (user.user_metadata?.['full_name']) {
       setFormData((prev) => ({
         ...prev,
-        displayName: user.user_metadata.full_name,
+        displayName: user.user_metadata['full_name'] as string,
       }));
     }
   }, [user, router]);
@@ -82,7 +84,9 @@ export default function SetupProfilePage() {
 
     try {
       // Create user profile
-      const { error: profileError } = await authService.getClient()
+      // Use type assertion for demo mode compatibility
+      const client = authService.getClient() as any;
+      const { error: profileError } = await client
         .from('user_profiles')
         .insert({
           id: user.id,

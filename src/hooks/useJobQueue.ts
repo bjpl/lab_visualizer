@@ -37,7 +37,7 @@ export function useJobQueue() {
         type: 'md',
         name: `MD Simulation - ${submission.structureId}`,
         estimatedTime: submission.config.totalTime * 1000, // Convert to ms
-        parameters: submission.config,
+        parameters: submission.config as unknown as Record<string, unknown>,
       });
 
       // Submit to queue service

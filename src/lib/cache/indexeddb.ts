@@ -34,6 +34,7 @@ export interface CacheEntry<T = unknown> {
 }
 
 export interface CacheMetadata {
+  key: string;
   totalSize: number;
   entryCount: number;
   hitCount: number;

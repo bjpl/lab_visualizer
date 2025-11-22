@@ -1,17 +1,13 @@
-import { onCLS, onFID, onFCP, onLCP, onTTFB, type Metric } from 'web-vitals';
+import { onCLS, onINP, onFCP, onLCP, onTTFB, type Metric } from 'web-vitals';
 
 /**
  * Web Vitals monitoring and reporting
  */
 
-interface WebVitalsMetric extends Metric {
-  rating?: 'good' | 'needs-improvement' | 'poor';
-}
-
 /**
  * Send metric to analytics endpoint
  */
-function sendToAnalytics(metric: WebVitalsMetric) {
+function sendToAnalytics(metric: Metric) {
   const body = JSON.stringify({
     name: metric.name,
     value: metric.value,
@@ -29,7 +25,7 @@ function sendToAnalytics(metric: WebVitalsMetric) {
   }
 
   // Log in development
-  if (import.meta.env.DEV) {
+  if (process.env.NODE_ENV === 'development') {
     console.log('[Web Vitals]', metric.name, metric.value, metric.rating);
   }
 }
@@ -38,12 +34,12 @@ function sendToAnalytics(metric: WebVitalsMetric) {
  * Initialize Web Vitals tracking
  */
 export function initWebVitals() {
-  if (!import.meta.env.VITE_ENABLE_WEB_VITALS) {
+  if (!process.env.NEXT_PUBLIC_ENABLE_WEB_VITALS) {
     return;
   }
 
   onCLS(sendToAnalytics);
-  onFID(sendToAnalytics);
+  onINP(sendToAnalytics); // Replaced onFID with onINP in web-vitals v4
   onFCP(sendToAnalytics);
   onLCP(sendToAnalytics);
   onTTFB(sendToAnalytics);
@@ -76,7 +72,7 @@ export class PerformanceTracker {
     this.marks.delete(name);
 
     // Report custom metric
-    if (import.meta.env.VITE_ENABLE_WEB_VITALS) {
+    if (process.env.NEXT_PUBLIC_ENABLE_WEB_VITALS) {
       fetch('/api/analytics', {
         method: 'POST',
         body: JSON.stringify({
@@ -88,7 +84,7 @@ export class PerformanceTracker {
       });
     }
 
-    if (import.meta.env.DEV) {
+    if (process.env.NODE_ENV === 'development') {
       console.log(`[Performance] ${name}: ${duration.toFixed(2)}ms`);
     }
 

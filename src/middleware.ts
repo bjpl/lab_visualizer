@@ -123,12 +123,12 @@ export async function middleware(req: NextRequest) {
         return NextResponse.redirect(redirectUrl);
       }
 
-      // Check if user profile exists
-      const { data: profile, error: profileError } = await supabase
+      // Check if user profile exists (using type assertion for demo mode compatibility)
+      const { data: profile, error: profileError } = await (supabase as any)
         .from('user_profiles')
         .select('id, username, role')
         .eq('id', session.user.id)
-        .single();
+        .single() as { data: { id: string; username: string; role: string } | null; error: Error | null };
 
       if (profileError || !profile) {
         // Profile doesn't exist, redirect to profile setup
@@ -137,7 +137,7 @@ export async function middleware(req: NextRequest) {
       }
 
       // Update last login timestamp
-      await supabase
+      await (supabase as any)
         .from('user_profiles')
         .update({ last_login: new Date().toISOString() })
         .eq('id', session.user.id);

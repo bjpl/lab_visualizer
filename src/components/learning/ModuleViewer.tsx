@@ -262,7 +262,7 @@ function QuizContent({ content, onProgress }: { content: Extract<ModuleContentDa
     const score = questions.reduce((acc, q) => {
       const userAnswer = answers[q.id];
       const correct = Array.isArray(q.correctAnswer)
-        ? JSON.stringify(userAnswer?.sort()) === JSON.stringify(q.correctAnswer.sort())
+        ? Array.isArray(userAnswer) && JSON.stringify([...userAnswer].sort()) === JSON.stringify([...q.correctAnswer].sort())
         : userAnswer === q.correctAnswer;
       return acc + (correct ? q.points : 0);
     }, 0);

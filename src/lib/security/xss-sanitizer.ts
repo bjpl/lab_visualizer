@@ -63,9 +63,9 @@ export class XSSSanitizer {
     }
 
     const config = this.buildDOMPurifyConfig();
-    const sanitized = DOMPurify.sanitize(html, config);
+    const sanitized = DOMPurify.sanitize(html, { ...config, RETURN_TRUSTED_TYPE: false });
 
-    return sanitized;
+    return sanitized as unknown as string;
   }
 
   /**
@@ -83,20 +83,20 @@ export class XSSSanitizer {
     const removed: string[] = [];
     const config = this.buildDOMPurifyConfig();
 
-    // Track removed elements
-    DOMPurify.addHook('uponSanitizeElement', (node: Element, data: any) => {
+    // Track removed elements using type-safe hooks
+    (DOMPurify as any).addHook('uponSanitizeElement', (node: Element, data: any) => {
       if (data.allowedTags && !data.allowedTags[data.tagName]) {
         removed.push(`Element: <${data.tagName}>`);
       }
     });
 
-    DOMPurify.addHook('uponSanitizeAttribute', (node: Element, data: any) => {
+    (DOMPurify as any).addHook('uponSanitizeAttribute', (node: Element, data: any) => {
       if (!data.keepAttr) {
         removed.push(`Attribute: ${data.attrName} on <${node.tagName}>`);
       }
     });
 
-    const sanitized = DOMPurify.sanitize(html, config);
+    const sanitized = DOMPurify.sanitize(html, { ...config, RETURN_TRUSTED_TYPE: false }) as unknown as string;
 
     // Remove hooks after sanitization
     DOMPurify.removeAllHooks();

@@ -70,7 +70,7 @@ export class CollaborationSessionService {
     };
 
     // Store session in database
-    const { error } = await this.supabase
+    const { error } = await (this.supabase as any)
       .from('collaboration_sessions')
       .insert({
         id: session.id,
@@ -98,11 +98,11 @@ export class CollaborationSessionService {
     userName: string
   ): Promise<{ session: CollaborationSession; user: CollaborationUser }> {
     // Fetch session from database
-    const { data: sessionData, error } = await this.supabase
+    const { data: sessionData, error } = await (this.supabase as any)
       .from('collaboration_sessions')
       .select('*')
       .eq('id', sessionId)
-      .single();
+      .single() as { data: Record<string, any> | null; error: Error | null };
 
     if (error || !sessionData) {
       throw new Error('Session not found');
@@ -148,11 +148,11 @@ export class CollaborationSessionService {
     userId: string,
     userName: string
   ): Promise<{ session: CollaborationSession; user: CollaborationUser }> {
-    const { data: sessionData, error } = await this.supabase
+    const { data: sessionData, error } = await (this.supabase as any)
       .from('collaboration_sessions')
       .select('*')
       .eq('invite_code', inviteCode)
-      .single();
+      .single() as { data: Record<string, any> | null; error: Error | null };
 
     if (error || !sessionData) {
       throw new Error('Invalid invite code');
@@ -289,7 +289,7 @@ export class CollaborationSessionService {
     sessionId: string,
     updates: Partial<SessionSettings>
   ): Promise<void> {
-    const { error } = await this.supabase
+    const { error } = await (this.supabase as any)
       .from('collaboration_sessions')
       .update({
         settings: updates,
@@ -302,14 +302,14 @@ export class CollaborationSessionService {
     }
 
     // Broadcast update
-    await this.broadcast('session-update', { settings: updates });
+    await this.broadcast('session-update', { settings: updates as SessionSettings });
   }
 
   /**
    * End session
    */
   async endSession(sessionId: string): Promise<void> {
-    const { error } = await this.supabase
+    const { error } = await (this.supabase as any)
       .from('collaboration_sessions')
       .update({
         is_active: false,
@@ -333,7 +333,7 @@ export class CollaborationSessionService {
     newRole: CollaborationUser['role']
   ): Promise<void> {
     // Store role change
-    const { error } = await this.supabase
+    const { error } = await (this.supabase as any)
       .from('session_users')
       .upsert({
         session_id: sessionId,
@@ -354,7 +354,7 @@ export class CollaborationSessionService {
    * Kick user from session
    */
   async kickUser(sessionId: string, userId: string): Promise<void> {
-    const { error } = await this.supabase
+    const { error } = await (this.supabase as any)
       .from('session_users')
       .delete()
       .eq('session_id', sessionId)

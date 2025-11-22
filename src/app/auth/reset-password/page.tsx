@@ -4,6 +4,8 @@
 
 import ResetPassword from '@/components/auth/ResetPassword';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: 'Reset Password - LAB Visualization Platform',
   description: 'Reset your account password',

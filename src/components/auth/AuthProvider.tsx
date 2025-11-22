@@ -213,12 +213,39 @@ export function AuthProvider({ children }: AuthProviderProps) {
 }
 
 /**
+ * Default auth context for SSR/build time
+ */
+const defaultAuthContext: AuthContextType = {
+  user: null,
+  session: null,
+  profile: null,
+  loading: true,
+  signIn: async () => ({ error: new Error('AuthProvider not available') }),
+  signUp: async () => ({ error: new Error('AuthProvider not available') }),
+  signOut: async () => {},
+  resetPassword: async () => ({ error: new Error('AuthProvider not available') }),
+  updatePassword: async () => ({ error: new Error('AuthProvider not available') }),
+  signInWithGoogle: async () => ({ error: new Error('AuthProvider not available') }),
+  signInWithGithub: async () => ({ error: new Error('AuthProvider not available') }),
+  signInWithMagicLink: async () => ({ error: new Error('AuthProvider not available') }),
+  refreshProfile: async () => {},
+};
+
+/**
  * Hook to access auth context
+ * Returns safe defaults during SSR/build time when AuthProvider is not available
  */
 export function useAuth() {
   const context = useContext(AuthContext);
+
+  // Return safe defaults during SSR or when context is not available
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    // Only warn in development
+    if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
+      console.warn('useAuth must be used within an AuthProvider - using default values');
+    }
+    return defaultAuthContext;
   }
+
   return context;
 }

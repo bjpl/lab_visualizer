@@ -81,7 +81,8 @@ function handleLoadGeometry(message: LoadGeometryMessage): void {
   // Calculate bounding box
   const bounds = calculateBounds(geometry.vertices);
 
-  self.postMessage(
+  // Use explicit options object for transferables
+  (self as unknown as Worker).postMessage(
     {
       id,
       type: 'geometry-loaded',
@@ -249,7 +250,7 @@ function handleSimplifyGeometry(message: SimplifyGeometryMessage): void {
     newIndices[i] = geometry.indices[i * stride];
   }
 
-  self.postMessage(
+  (self as unknown as Worker).postMessage(
     {
       id,
       type: 'geometry-simplified',
@@ -305,7 +306,7 @@ function handlePrepareInstances(message: PrepareInstancesMessage): void {
     instanceColors[index * 3 + 2] = color[2];
   });
 
-  self.postMessage(
+  (self as unknown as Worker).postMessage(
     {
       id,
       type: 'instances-prepared',

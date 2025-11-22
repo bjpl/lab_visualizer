@@ -1,6 +1,24 @@
 import { motion } from 'framer-motion';
-import { AnnotationMarkerProps } from '../../types';
 import { useState } from 'react';
+
+// Define types inline since they're not exported from types
+interface BodyPart {
+  id: string;
+  spanish: string;
+  english: string;
+  category: string;
+  difficulty: string;
+  coordinates: { x: number; y: number };
+  position?: { x: number; y: number };
+}
+
+export interface AnnotationMarkerProps {
+  bodyPart: BodyPart;
+  isActive: boolean;
+  isRevealed?: boolean;
+  onClick: () => void;
+  onHover?: (hovering: boolean) => void;
+}
 
 export const AnnotationMarker = ({
   bodyPart,
@@ -27,7 +45,7 @@ export const AnnotationMarker = ({
       scale: 1,
       opacity: 1,
       transition: {
-        type: 'spring',
+        type: 'spring' as const,
         stiffness: 260,
         damping: 20
       }
@@ -35,7 +53,7 @@ export const AnnotationMarker = ({
     hover: {
       scale: 1.3,
       transition: {
-        type: 'spring',
+        type: 'spring' as const,
         stiffness: 400,
         damping: 10
       }
@@ -53,7 +71,7 @@ export const AnnotationMarker = ({
       transition: {
         duration: 2,
         repeat: Infinity,
-        ease: 'easeInOut'
+        ease: 'easeInOut' as const
       }
     }
   };

@@ -1,13 +1,10 @@
-import { createApi } from 'unsplash-js';
 import { UnsplashImage } from '../types';
 
 // For demo purposes, we'll use demo images
 // In production, you would add your Unsplash API key
-const unsplash = createApi({
-  accessKey: import.meta.env.VITE_UNSPLASH_ACCESS_KEY || 'DEMO_KEY'
-});
+const UNSPLASH_ACCESS_KEY = process.env.NEXT_PUBLIC_UNSPLASH_ACCESS_KEY || '';
 
-const FALLBACK_IMAGES = [
+const FALLBACK_IMAGES: UnsplashImage[] = [
   {
     id: '1',
     urls: {
@@ -31,22 +28,27 @@ const FALLBACK_IMAGES = [
 export const searchHumanBodyImages = async (query: string = 'human anatomy'): Promise<UnsplashImage[]> => {
   try {
     // If we don't have a valid API key, return fallback images
-    if (!import.meta.env.VITE_UNSPLASH_ACCESS_KEY || import.meta.env.VITE_UNSPLASH_ACCESS_KEY === 'DEMO_KEY') {
+    if (!UNSPLASH_ACCESS_KEY) {
       return FALLBACK_IMAGES;
     }
 
-    const result = await unsplash.search.getPhotos({
-      query,
-      perPage: 10,
-      orientation: 'portrait'
-    });
+    const response = await fetch(
+      `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=10&orientation=portrait`,
+      {
+        headers: {
+          Authorization: `Client-ID ${UNSPLASH_ACCESS_KEY}`,
+        },
+      }
+    );
 
-    if (result.errors) {
-      console.error('Unsplash API error:', result.errors);
+    if (!response.ok) {
+      console.error('Unsplash API error:', response.statusText);
       return FALLBACK_IMAGES;
     }
 
-    return result.response?.results.map(photo => ({
+    const data = await response.json();
+
+    return data.results?.map((photo: any) => ({
       id: photo.id,
       urls: photo.urls,
       alt_description: photo.alt_description,

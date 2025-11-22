@@ -108,20 +108,30 @@ export function useCacheStats() {
 }
 
 /**
+ * Context type for optimistic updates
+ */
+interface MutationContext {
+  previousData?: unknown;
+}
+
+/**
  * Hook for mutation with optimistic updates
  */
 export function useCachedMutation<TData, TVariables>(
   mutationFn: (variables: TVariables) => Promise<TData>,
-  options?: UseMutationOptions<TData, Error, TVariables> & {
+  options?: Omit<UseMutationOptions<TData, Error, TVariables, MutationContext>, 'onMutate' | 'onError' | 'onSuccess'> & {
     cacheKey?: string;
     optimisticData?: (variables: TVariables) => TData;
+    onMutate?: (variables: TVariables) => unknown;
+    onError?: (err: Error, variables: TVariables, context: MutationContext | undefined) => void;
+    onSuccess?: (data: TData, variables: TVariables, context: MutationContext | undefined) => void;
   }
 ) {
   const queryClient = useQueryClient();
 
-  return useMutation<TData, Error, TVariables>({
+  return useMutation<TData, Error, TVariables, MutationContext>({
     mutationFn,
-    onMutate: async (variables) => {
+    onMutate: async (variables): Promise<MutationContext> => {
       if (options?.cacheKey && options?.optimisticData) {
         // Cancel outgoing refetches
         await queryClient.cancelQueries({ queryKey: ['cached', options.cacheKey] });
@@ -134,7 +144,11 @@ export function useCachedMutation<TData, TVariables>(
 
         return { previousData };
       }
-      return options?.onMutate?.(variables);
+      // Call the original onMutate if defined
+      if (options?.onMutate) {
+        options.onMutate(variables);
+      }
+      return {};
     },
     onError: (err, variables, context) => {
       if (options?.cacheKey && context?.previousData) {

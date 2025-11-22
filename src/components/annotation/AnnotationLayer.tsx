@@ -1,7 +1,17 @@
 import { useStore } from '../../store/useStore';
-import { BodyPart } from '../../types';
 import { AnnotationMarker } from './AnnotationMarker';
 import { AnimatePresence } from 'framer-motion';
+
+// Define BodyPart type inline since it's not exported from types
+interface BodyPart {
+  id: string;
+  spanish: string;
+  english: string;
+  category: string;
+  difficulty: string;
+  coordinates: { x: number; y: number };
+  position?: { x: number; y: number };
+}
 
 interface AnnotationLayerProps {
   bodyParts: BodyPart[];

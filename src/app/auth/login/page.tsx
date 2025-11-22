@@ -4,6 +4,8 @@
 
 import LoginForm from '@/components/auth/LoginForm';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: 'Login - LAB Visualization Platform',
   description: 'Sign in to your LAB Visualization account',

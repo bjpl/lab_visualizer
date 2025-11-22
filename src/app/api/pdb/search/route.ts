@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { searchPDB } from '@/services/pdb-fetcher';
-import { cacheService } from '@/services/cache-service';
+// Cache service removed - caching disabled in demo mode
 
 export const runtime = 'edge';
 
@@ -23,22 +23,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Cache search results for 5 minutes
-    const cacheKey = `search:${query}:${limit}:${offset}`;
-    const cached = await cacheService.get(cacheKey, 'l2');
-
-    if (cached) {
-      return NextResponse.json({
-        results: cached,
-        cached: true
-      });
-    }
-
-    // Perform search
+    // Cache disabled in demo mode - search directly
     const results = await searchPDB(query, { limit, offset });
-
-    // Cache results
-    await cacheService.set(cacheKey, results, { level: 'l2', ttl: 5 * 60 });
 
     return NextResponse.json({
       results,

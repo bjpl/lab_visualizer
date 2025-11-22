@@ -132,7 +132,7 @@ export async function PUT(
  * Delete module
  */
 export async function DELETE(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {

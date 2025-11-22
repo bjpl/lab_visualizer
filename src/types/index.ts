@@ -65,3 +65,43 @@ export interface QueryParams {
   filters?: FilterOption[];
   search?: string;
 }
+
+/**
+ * Learning mode types for the body parts app
+ */
+export type LearningMode = 'study' | 'quiz' | 'challenge';
+
+/**
+ * Body part type for anatomy learning
+ */
+export interface BodyPart {
+  id: string;
+  spanish: string;
+  english: string;
+  category: string;
+  difficulty: string;
+  coordinates: { x: number; y: number };
+  position?: { x: number; y: number };
+}
+
+/**
+ * Unsplash image type
+ */
+export interface UnsplashImage {
+  id: string;
+  urls: {
+    raw: string;
+    full: string;
+    regular: string;
+    small: string;
+    thumb: string;
+  };
+  alt_description: string | null;
+  user: {
+    name: string;
+    username: string;
+  };
+  links: {
+    html: string;
+  };
+}

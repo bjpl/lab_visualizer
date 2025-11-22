@@ -12,6 +12,8 @@
 
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import React, { useState, useEffect } from 'react';
 import { JobList } from '@/components/jobs/JobList';
 import { JobDetails } from '@/components/jobs/JobDetails';

@@ -49,7 +49,7 @@ class PDBServiceImpl implements IPDBService {
     return new Promise((resolve, reject) => {
       const request = indexedDB.open(CACHE_DB_NAME, CACHE_VERSION);
 
-      request.onerror = () => reject(this.createError('CACHE_ERROR', request.error));
+      request.onerror = () => reject(this.createError('CACHE_ERROR', request.error?.message || 'IndexedDB error'));
 
       request.onsuccess = () => {
         this.db = request.result;

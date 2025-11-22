@@ -26,7 +26,7 @@ export function trackEvent(event: AnalyticsEvent) {
 
   // Send to Vercel Analytics
   if (window.va) {
-    window.va('event', event.name, event.properties);
+    window.va('event', { name: event.name, ...event.properties });
   }
 
   // Also log in development
