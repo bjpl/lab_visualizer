@@ -8,6 +8,11 @@
 import Redis from 'ioredis';
 import { Request, Response, NextFunction } from 'express';
 
+// Enforce Redis configuration in production
+if (process.env.NODE_ENV === 'production' && !process.env.REDIS_HOST) {
+  throw new Error('REDIS_HOST environment variable is required in production for auth lockout');
+}
+
 export interface LockoutConfig {
   maxAttempts: number;
   windowMs: number;

@@ -8,6 +8,11 @@
 import { randomBytes, createHmac, timingSafeEqual } from 'crypto';
 import type { Request, Response, NextFunction } from 'express';
 
+// Enforce CSRF_SECRET in production
+if (process.env.NODE_ENV === 'production' && !process.env.CSRF_SECRET) {
+  throw new Error('CSRF_SECRET environment variable is required in production. Generate with: openssl rand -hex 32');
+}
+
 export interface CSRFConfig {
   secret: string;
   tokenLength: number;

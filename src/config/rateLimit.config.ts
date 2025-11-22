@@ -10,6 +10,11 @@ import { RateLimitTier, RateLimitConfig, EndpointRateLimit, RedisConnectionConfi
 const isDevelopment = process.env.NODE_ENV === 'development';
 const isProduction = process.env.NODE_ENV === 'production';
 
+// Enforce Redis configuration in production
+if (isProduction && !process.env.REDIS_HOST) {
+  throw new Error('REDIS_HOST environment variable is required in production for rate limiting');
+}
+
 /**
  * Default rate limit configurations by tier
  */
