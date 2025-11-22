@@ -8,11 +8,21 @@ import { Button } from '@/components/ui/button';
 import { Eye, Download, BookOpen } from 'lucide-react';
 import type { PopularStructure } from '@/data/popular-structures';
 
+// Extended structure type that supports both PopularStructure and LABProtein
+interface ExtendedStructure extends PopularStructure {
+  pdbId?: string; // LAB proteins have separate pdbId field
+  species?: string;
+  function?: string;
+}
+
 interface StructureCardProps {
-  structure: PopularStructure;
+  structure: ExtendedStructure;
 }
 
 export function StructureCard({ structure }: StructureCardProps) {
+  // Use pdbId if available (LAB proteins), otherwise fall back to id (PopularStructure)
+  const pdbId = structure.pdbId || structure.id;
+
   const categoryIcons: Record<string, string> = {
     classic: '🏛️',
     enzyme: '⚡',
@@ -38,7 +48,7 @@ export function StructureCard({ structure }: StructureCardProps) {
             <div>
               <CardTitle className="text-lg">{structure.name}</CardTitle>
               <CardDescription className="mt-1 text-xs font-mono">
-                PDB ID: {structure.id}
+                PDB ID: {pdbId}
               </CardDescription>
             </div>
           </div>
@@ -87,7 +97,7 @@ export function StructureCard({ structure }: StructureCardProps) {
 
         <div className="mt-4 flex gap-2">
           <Button asChild size="sm" className="flex-1">
-            <Link href={`/viewer?pdb=${structure.id}`}>
+            <Link href={`/viewer?pdb=${pdbId}`}>
               <Eye className="mr-2 h-4 w-4" />
               View 3D
             </Link>
