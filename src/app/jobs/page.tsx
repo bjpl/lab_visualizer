@@ -12,8 +12,6 @@
 
 'use client';
 
-export const dynamic = 'force-dynamic';
-
 import React, { useState, useEffect } from 'react';
 import { JobList } from '@/components/jobs/JobList';
 import { JobDetails } from '@/components/jobs/JobDetails';
@@ -80,9 +78,10 @@ export default function JobsPage() {
     const loadStats = async () => {
       const stats = await getQueueStats();
       if (stats) {
+        const total = stats.completed + stats.failed;
         setQueueStats({
           ...stats,
-          completionRate24h: stats.completed / (stats.completed + stats.failed) * 100,
+          completionRate24h: total > 0 ? (stats.completed / total * 100) : 0,
         });
       }
     };
