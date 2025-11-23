@@ -7,9 +7,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Eye, Download, BookOpen } from 'lucide-react';
 import type { PopularStructure } from '@/data/popular-structures';
+import type { LABProtein } from '@/data/lab-structures';
 
 interface StructureCardProps {
-  structure: PopularStructure;
+  structure: PopularStructure | LABProtein;
 }
 
 export function StructureCard({ structure }: StructureCardProps) {
@@ -38,7 +39,7 @@ export function StructureCard({ structure }: StructureCardProps) {
             <div>
               <CardTitle className="text-lg">{structure.name}</CardTitle>
               <CardDescription className="mt-1 text-xs font-mono">
-                PDB ID: {structure.id}
+                PDB ID: {'pdbId' in structure ? structure.pdbId : structure.id}
               </CardDescription>
             </div>
           </div>
