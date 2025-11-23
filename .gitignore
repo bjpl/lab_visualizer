@@ -80,3 +80,5 @@ hive-mind-prompt-*.txt
 # Local development artifacts
 completion_reports/
 prompts/
+
+.vercel

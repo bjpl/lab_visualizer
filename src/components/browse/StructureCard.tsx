@@ -87,7 +87,7 @@ export function StructureCard({ structure }: StructureCardProps) {
 
         <div className="mt-4 flex gap-2">
           <Button asChild size="sm" className="flex-1">
-            <Link href={`/viewer?pdb=${structure.id}`}>
+            <Link href={`/viewer?pdb=${structure.pdbId || structure.id}`}>
               <Eye className="mr-2 h-4 w-4" />
               View 3D
             </Link>
