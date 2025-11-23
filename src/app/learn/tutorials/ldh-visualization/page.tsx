@@ -329,7 +329,7 @@ export default function LDHVisualizationTutorial() {
               <div className="h-[400px] lg:h-[500px]">
                 <MolStarViewer
                   pdbId="1LDG"
-                  onReady={() => setViewerReady(true)}
+                  onLoadComplete={() => setViewerReady(true)}
                 />
               </div>
             </CardContent>
