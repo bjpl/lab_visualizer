@@ -9,108 +9,51 @@ Interactive data visualization and analytics platform built with Next.js 14, Typ
 - **Database**: Supabase
 - **State Management**: Zustand
 - **Styling**: Tailwind CSS
-- **Testing**: Vitest + Playwright
+- **Testing**: Vitest + Playwright (80% coverage threshold)
 - **Code Quality**: ESLint + Prettier
 
-## Quick Start
+## Technical Overview
 
-### Prerequisites
+This project demonstrates modern Next.js application architecture with App Router, comprehensive testing infrastructure, and strict TypeScript configuration. The implementation includes performance budgets, security headers, and enforced code quality standards.
 
-- Node.js 18.17.0 or higher
-- npm 9.0.0 or higher
+**Key Features:**
+- Server and client component architecture
+- Type-safe database integration with Supabase
+- End-to-end testing with Playwright
+- 80% code coverage requirement
+- Performance monitoring and optimization
 
-### Installation
+## Exploring the Code
 
-```bash
-# Install dependencies
-npm install
+<details>
+<summary>Click to expand</summary>
 
-# Copy environment variables
-cp .env.example .env.local
-
-# Configure Supabase credentials in .env.local
-# NEXT_PUBLIC_SUPABASE_URL=your-project-url
-# NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-```
-
-### Development
-
-```bash
-# Start development server
-npm run dev
-
-# Run tests
-npm run test
-
-# Run E2E tests
-npm run test:e2e
-
-# Type checking
-npm run typecheck
-
-# Linting
-npm run lint
-
-# Format code
-npm run format
-```
-
-Open [http://localhost:3000](http://localhost:3000) to see your application.
-
-## Project Structure
-
+**Project Structure:**
 ```
 lab_visualizer/
 ├── src/
-│   ├── app/                 # Next.js App Router pages
-│   │   ├── layout.tsx      # Root layout
-│   │   ├── page.tsx        # Home page
-│   │   └── globals.css     # Global styles
-│   ├── components/         # React components
-│   ├── lib/                # Utility libraries
-│   │   └── supabase/       # Supabase clients
-│   ├── types/              # TypeScript types
-│   ├── config/             # App configuration
-│   ├── hooks/              # Custom React hooks
-│   ├── stores/             # Zustand stores
-│   └── tests/              # Test files
-│       ├── setup.ts        # Test setup
-│       └── e2e/            # E2E tests
-├── docs/                   # Documentation
-├── public/                 # Static assets
-└── config files           # ESLint, Prettier, etc.
+│   ├── app/              # Next.js App Router pages
+│   ├── components/       # React components
+│   ├── lib/supabase/     # Supabase client setup
+│   ├── types/            # TypeScript type definitions
+│   ├── hooks/            # Custom React hooks
+│   ├── stores/           # Zustand state stores
+│   └── tests/            # Test files (unit + E2E)
+├── docs/                 # Architecture documentation
+└── public/               # Static assets
 ```
 
-## Available Scripts
+**For Technical Review:**
+- TypeScript strict mode with comprehensive type checking
+- Testing setup with 80% coverage threshold enforced
+- Performance budgets in Next.js configuration
+- Security headers and best practices implementation
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run start` - Start production server
-- `npm run test` - Run unit tests
-- `npm run test:ui` - Run tests with UI
-- `npm run test:coverage` - Generate coverage report
-- `npm run test:e2e` - Run E2E tests
-- `npm run lint` - Run ESLint
-- `npm run typecheck` - Run TypeScript compiler
-- `npm run format` - Format code with Prettier
+**Local Development:**
+See `docs/setup/local-development.md` for setup instructions.
 
-## Code Quality Standards
-
-- **TypeScript**: Strict mode enabled with comprehensive type checking
-- **Testing**: 80% coverage threshold for all code
-- **Performance**: Performance budgets enforced in Next.js config
-- **Security**: Security headers and best practices implemented
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines and best practices.
-
-## Documentation
-
-- [Local Development Setup](docs/setup/local-development.md)
-- [Architecture Decisions](docs/architecture/)
-- [Testing Guide](docs/testing/)
+</details>
 
 ## License
 
-Proprietary - All rights reserved
+MIT License - See LICENSE file
