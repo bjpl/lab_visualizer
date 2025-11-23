@@ -12,7 +12,7 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Component, ErrorInfo, ReactNode } from 'react';
 import { JobList } from '@/components/jobs/JobList';
 import { JobDetails } from '@/components/jobs/JobDetails';
 import { JobSubmissionForm } from '@/components/jobs/JobSubmissionForm';
@@ -24,32 +24,139 @@ import { useStore } from '@/stores';
 import { useAuth } from '@/hooks/use-auth';
 import { MDJob, MDResult } from '@/types/md-types';
 
+// Error Boundary for Jobs Page
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+}
+
+interface ErrorBoundaryProps {
+  children: ReactNode;
+  fallback?: ReactNode;
+}
+
+class JobsErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('[JobsPage] Error caught by boundary:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        this.props.fallback || (
+          <div className="h-screen flex flex-col items-center justify-center p-8">
+            <div className="max-w-md text-center space-y-4">
+              <h1 className="text-2xl font-bold text-destructive">Something went wrong</h1>
+              <p className="text-muted-foreground">
+                The Jobs page encountered an error. Please try refreshing the page.
+              </p>
+              <pre className="text-xs text-left bg-muted p-4 rounded-md overflow-auto max-h-32">
+                {this.state.error?.message || 'Unknown error'}
+              </pre>
+              <button
+                onClick={() => {
+                  this.setState({ hasError: false, error: null });
+                  window.location.reload();
+                }}
+                className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+              >
+                Reload Page
+              </button>
+            </div>
+          </div>
+        )
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+// Loading fallback for hydration
+function JobsLoadingFallback() {
+  return (
+    <div className="h-screen flex flex-col">
+      <header className="border-b p-4">
+        <div className="max-w-7xl mx-auto">
+          <h1 className="text-2xl font-bold">Simulation Jobs</h1>
+          <p className="text-sm text-muted-foreground">Loading...</p>
+        </div>
+      </header>
+      <main className="flex-1 flex items-center justify-center">
+        <div className="animate-pulse text-muted-foreground">Loading jobs...</div>
+      </main>
+    </div>
+  );
+}
+
+// Main page wrapper with error boundary
 export default function JobsPage() {
+  return (
+    <JobsErrorBoundary>
+      <JobsPageContent />
+    </JobsErrorBoundary>
+  );
+}
+
+function JobsPageContent() {
+  // Client-side mounting guard to prevent hydration mismatches
+  const [mounted, setMounted] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [showSubmitForm, setShowSubmitForm] = useState(false);
   const [queueStats, setQueueStats] = useState<any>(null);
 
+  // Ensure client-side only rendering for store-dependent content
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const { user } = useAuth();
   const { submitJob, cancelJob, removeJob, retryJob, getQueueStats } = useJobQueue();
-  const jobs = useStore((state) => Array.from(state.jobs.values()));
+
+  // Access store only after mounting to prevent hydration mismatch
+  const jobs = useStore((state) => mounted ? Array.from(state.jobs.values()) : []);
   const results = useStore((state) => state.results);
 
   // Get user ID from auth, fallback to demo mode if not authenticated
   const userId = user?.id || 'demo-user';
 
   // Convert simulation jobs to MD jobs (temporary adapter)
+  // Safe date parsing to prevent NaN/Invalid Date errors
+  const safeParseDate = (dateValue: string | number | Date | undefined | null): Date => {
+    if (!dateValue) return new Date();
+    try {
+      const parsed = new Date(dateValue);
+      // Check for invalid date
+      if (isNaN(parsed.getTime())) {
+        return new Date();
+      }
+      return parsed;
+    } catch {
+      return new Date();
+    }
+  };
+
   const mdJobs: MDJob[] = jobs.map((job) => ({
     id: job.id,
     userId: userId,
     status: job.status as any,
     config: job.parameters as any,
-    structureId: job.name,
+    structureId: job.name || 'Unknown Structure',
     structureData: '',
-    createdAt: new Date(job.createdAt),
-    startedAt: job.startedAt ? new Date(job.startedAt) : undefined,
-    completedAt: job.completedAt ? new Date(job.completedAt) : undefined,
-    progress: job.progress,
-    estimatedTimeRemaining: job.estimatedTime,
+    createdAt: safeParseDate(job.createdAt),
+    startedAt: job.startedAt ? safeParseDate(job.startedAt) : undefined,
+    completedAt: job.completedAt ? safeParseDate(job.completedAt) : undefined,
+    progress: typeof job.progress === 'number' && !isNaN(job.progress) ? job.progress : 0,
+    estimatedTimeRemaining: typeof job.estimatedTime === 'number' && !isNaN(job.estimatedTime) ? job.estimatedTime : undefined,
     errorMessage: job.error,
   }));
 
@@ -123,6 +230,11 @@ export default function JobsPage() {
       setSelectedJobId(newJob.id);
     }
   };
+
+  // Show loading state during hydration to prevent mismatches
+  if (!mounted) {
+    return <JobsLoadingFallback />;
+  }
 
   return (
     <div className="h-screen flex flex-col">

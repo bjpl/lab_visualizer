@@ -9,7 +9,7 @@
  * - Optimistic UI updates
  */
 
-import { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef, useCallback, useState } from 'react';
 import { MDJob, JobStatus } from '@/types/md-types';
 
 export interface JobUpdate {
@@ -57,9 +57,9 @@ export function useJobSubscription(options: UseJobSubscriptionOptions) {
 
   const subscriptionRef = useRef<any>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const [isConnected, setIsConnected] = React.useState(false);
-  const [lastUpdate, setLastUpdate] = React.useState<Date | null>(null);
-  const [error, setError] = React.useState<string | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const handleUpdate = useCallback((update: JobUpdate) => {
     setLastUpdate(new Date());
@@ -165,6 +165,3 @@ export function useJobSubscription(options: UseJobSubscriptionOptions) {
     reconnect: subscribe,
   };
 }
-
-// React import for useState
-import React from 'react';

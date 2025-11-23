@@ -24,6 +24,9 @@ function getMolstarService() {
   return molstarServicePromise;
 }
 
+// Maximum retry attempts for structure loading
+const MAX_LOAD_RETRIES = 3;
+
 export function MolStarViewer({
   pdbId,
   onLoadStart,
@@ -42,13 +45,30 @@ export function MolStarViewer({
   const mountedRef = useRef(true);
   const initIdRef = useRef(0); // Track which initialization cycle we're in
 
+  // Track structure loading to prevent duplicate fetches
+  const loadingStructureRef = useRef<string | null>(null);
+  const loadedStructureRef = useRef<string | null>(null);
+  const retryCountRef = useRef(0);
+
+  // Store stable references to callbacks to prevent effect re-runs
+  const onLoadStartRef = useRef(onLoadStart);
+  const onLoadCompleteRef = useRef(onLoadComplete);
+  const onErrorRef = useRef(onError);
+
+  // Update refs when callbacks change (without triggering effects)
+  useEffect(() => {
+    onLoadStartRef.current = onLoadStart;
+    onLoadCompleteRef.current = onLoadComplete;
+    onErrorRef.current = onError;
+  });
+
   // Memoize error handler to avoid effect re-runs
   const handleError = useCallback((error: string) => {
     if (mountedRef.current) {
       setInitError(error);
-      onError?.(error);
+      onErrorRef.current?.(error);
     }
-  }, [onError]);
+  }, []);
 
   // Initialize Mol* viewer
   useEffect(() => {
@@ -82,12 +102,25 @@ export function MolStarViewer({
       initializingRef.current = true;
 
       try {
-        onLoadStart?.();
+        onLoadStartRef.current?.();
         setIsLoading(true);
         setInitError(null);
 
         // Append container to wrapper (outside React's DOM management)
         wrapper.appendChild(molstarContainer);
+
+        // Add WebGL context lost/restored handlers to the container
+        // These will be applied to canvases created inside
+        const handleContextLost = (e: Event) => {
+          e.preventDefault();
+          console.error('[MolStarViewer] WebGL context lost');
+          if (mountedRef.current && currentInitId === initIdRef.current) {
+            handleError('WebGL context lost. Please refresh the page.');
+          }
+        };
+
+        // Store handler for cleanup
+        (molstarContainer as any).__contextLostHandler = handleContextLost;
 
         // Dynamically import molstar service to avoid SSR issues
         const { molstarService } = await getMolstarService();
@@ -123,9 +156,18 @@ export function MolStarViewer({
           return;
         }
 
+        // Add WebGL context lost handler to any canvases created by MolStar
+        const canvases = molstarContainer.querySelectorAll('canvas');
+        canvases.forEach((canvas) => {
+          const contextLostHandler = (molstarContainer as any).__contextLostHandler;
+          if (contextLostHandler) {
+            canvas.addEventListener('webglcontextlost', contextLostHandler);
+          }
+        });
+
         setIsReady(true);
         setIsLoading(false);
-        onLoadComplete?.();
+        onLoadCompleteRef.current?.();
         console.info('[MolStarViewer] Initialization complete');
       } catch (error) {
         console.error('[MolStarViewer] Failed to initialize:', error);
@@ -163,29 +205,69 @@ export function MolStarViewer({
   useEffect(() => {
     if (!pdbId || !isReady) return;
 
+    // Prevent duplicate fetches for the same structure
+    if (loadingStructureRef.current === pdbId) {
+      console.info(`[MolStarViewer] Already loading ${pdbId}, skipping duplicate request`);
+      return;
+    }
+
+    // Skip if already loaded this structure
+    if (loadedStructureRef.current === pdbId) {
+      console.info(`[MolStarViewer] Structure ${pdbId} already loaded`);
+      return;
+    }
+
     let cancelled = false;
+    loadingStructureRef.current = pdbId;
 
     const loadStructure = async () => {
       try {
-        onLoadStart?.();
+        onLoadStartRef.current?.();
         setIsLoading(true);
 
         const { molstarService } = await getMolstarService();
 
-        if (cancelled) return;
+        if (cancelled) {
+          loadingStructureRef.current = null;
+          return;
+        }
 
         // Load PDB structure using molstarService
         await molstarService.loadStructureById(pdbId);
 
-        if (cancelled) return;
+        if (cancelled) {
+          loadingStructureRef.current = null;
+          return;
+        }
 
+        // Successfully loaded
+        loadedStructureRef.current = pdbId;
+        loadingStructureRef.current = null;
+        retryCountRef.current = 0;
         setIsLoading(false);
-        onLoadComplete?.();
+        onLoadCompleteRef.current?.();
+        console.info(`[MolStarViewer] Structure ${pdbId} loaded successfully`);
       } catch (error) {
         console.error('[MolStarViewer] Failed to load structure:', error);
+        loadingStructureRef.current = null;
+
         if (!cancelled) {
-          setIsLoading(false);
-          handleError(`Failed to load structure: ${pdbId}`);
+          retryCountRef.current += 1;
+
+          if (retryCountRef.current >= MAX_LOAD_RETRIES) {
+            setIsLoading(false);
+            handleError(`Failed to load structure ${pdbId} after ${MAX_LOAD_RETRIES} attempts`);
+            retryCountRef.current = 0;
+          } else {
+            // Retry after a delay
+            console.info(`[MolStarViewer] Retrying (${retryCountRef.current}/${MAX_LOAD_RETRIES})...`);
+            setTimeout(() => {
+              if (!cancelled && mountedRef.current) {
+                loadingStructureRef.current = null; // Allow retry
+                loadStructure();
+              }
+            }, 1000 * retryCountRef.current); // Exponential backoff
+          }
         }
       }
     };
@@ -195,7 +277,7 @@ export function MolStarViewer({
     return () => {
       cancelled = true;
     };
-  }, [pdbId, isReady, onLoadStart, onLoadComplete, handleError]);
+  }, [pdbId, isReady, handleError]); // Only depend on pdbId, isReady, and handleError (which is stable)
 
   return (
     <div
