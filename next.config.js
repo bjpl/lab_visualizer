@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
+  reactStrictMode: false, // Disabled to prevent MolStar WebGL context issues
 
   // Transpile molstar for Next.js compatibility
   transpilePackages: ['molstar'],
