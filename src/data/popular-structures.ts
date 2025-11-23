@@ -5,6 +5,7 @@
 
 export interface PopularStructure {
   id: string;
+  pdbId?: string; // Actual PDB code for fetching from RCSB (if different from id)
   name: string;
   description: string;
   category: string;
