@@ -421,7 +421,7 @@ export default function LDHVisualizationTutorial() {
               <p className="text-xs text-secondary-600 dark:text-secondary-400 mt-1">
                 Deep dive into homofermentative and heterofermentative pathways
               </p>
-              <Button variant="link" size="sm" className="px-0 mt-2" asChild>
+              <Button variant="ghost" size="sm" className="px-0 mt-2" asChild>
                 <Link href="/learn/modules/fermentation-biochemistry">
                   Continue <ChevronRight className="h-4 w-4" />
                 </Link>
@@ -435,7 +435,7 @@ export default function LDHVisualizationTutorial() {
               <p className="text-xs text-secondary-600 dark:text-secondary-400 mt-1">
                 View GAPDH (1DC4), Pyruvate Kinase (3OOO), and other fermentation enzymes
               </p>
-              <Button variant="link" size="sm" className="px-0 mt-2" asChild>
+              <Button variant="ghost" size="sm" className="px-0 mt-2" asChild>
                 <Link href="/browse">
                   Browse Structures <ChevronRight className="h-4 w-4" />
                 </Link>
@@ -449,7 +449,7 @@ export default function LDHVisualizationTutorial() {
               <p className="text-xs text-secondary-600 dark:text-secondary-400 mt-1">
                 See how LDH fits into the complete fermentation pathway
               </p>
-              <Button variant="link" size="sm" className="px-0 mt-2" asChild>
+              <Button variant="ghost" size="sm" className="px-0 mt-2" asChild>
                 <Link href="/learn/tutorials/fermentation-pathway">
                   Explore <ChevronRight className="h-4 w-4" />
                 </Link>
