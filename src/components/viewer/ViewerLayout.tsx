@@ -12,6 +12,12 @@ import { SelectionPanel } from './SelectionPanel';
 import { LoadingState } from './LoadingState';
 import { CollaborationPanel } from '@/components/collaboration/CollaborationPanel';
 import { useCollaborationStore, selectCurrentSession } from '@/store/collaboration-slice';
+import {
+  HoverTooltip,
+  MeasurementsPanel,
+  HydrogenBondsToggle,
+  SequenceViewer
+} from './interactive';
 
 interface ViewerLayoutProps {
   pdbId?: string;
@@ -42,6 +48,8 @@ export function ViewerLayout({
   const [isLoading, setIsLoading] = useState(!!pdbId);
   const [error, setError] = useState<string | null>(null);
   const [showCollaboration, setShowCollaboration] = useState(false);
+  const [showMeasurements, setShowMeasurements] = useState(false);
+  const [showSequenceViewer, setShowSequenceViewer] = useState(true);
 
   const session = useCollaborationStore(selectCurrentSession);
   const isInSession = !!session;
@@ -117,43 +125,56 @@ export function ViewerLayout({
       </div>
 
       {/* Main Content */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Canvas Area */}
-        <div
-          className={cn(
-            'relative flex-1 transition-all duration-300',
-            'lg:flex-none',
-            isPanelCollapsed ? 'lg:w-full' : 'lg:w-[70%]'
-          )}
-        >
-          {isLoading && <LoadingState />}
-
-          <MolStarViewer
-            pdbId={pdbId}
-            onLoadStart={() => setIsLoading(true)}
-            onLoadComplete={() => setIsLoading(false)}
-            onError={(err) => {
-              setError(err);
-              setIsLoading(false);
-            }}
-            className="h-full w-full"
-          />
-
-          {/* Fullscreen Toggle Overlay */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute bottom-4 right-4 bg-background/80 backdrop-blur hover:bg-background"
-            onClick={toggleFullscreen}
-            aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-          >
-            {isFullscreen ? (
-              <Minimize2 className="h-4 w-4" />
-            ) : (
-              <Maximize2 className="h-4 w-4" />
+      <div className="flex flex-1 overflow-hidden flex-col">
+        {/* Main Viewer Area */}
+        <div className="flex flex-1 overflow-hidden">
+          {/* Canvas Area */}
+          <div
+            className={cn(
+              'relative flex-1 transition-all duration-300',
+              'lg:flex-none',
+              isPanelCollapsed ? 'lg:w-full' : 'lg:w-[70%]'
             )}
-          </Button>
-        </div>
+          >
+            {isLoading && <LoadingState />}
+
+            <MolStarViewer
+              pdbId={pdbId}
+              onLoadStart={() => setIsLoading(true)}
+              onLoadComplete={() => setIsLoading(false)}
+              onError={(err) => {
+                setError(err);
+                setIsLoading(false);
+              }}
+              className="h-full w-full"
+            />
+
+            {/* Interactive Features Overlay */}
+            <HoverTooltip position="bottom-right" showAtomInfo={true} />
+
+            {/* Measurements Panel */}
+            {showMeasurements && (
+              <MeasurementsPanel
+                className="absolute top-4 right-4 w-80 max-h-[calc(100%-2rem)] overflow-hidden z-20"
+                onClose={() => setShowMeasurements(false)}
+              />
+            )}
+
+            {/* Fullscreen Toggle Overlay */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute bottom-4 right-4 bg-background/80 backdrop-blur hover:bg-background z-10"
+              onClick={toggleFullscreen}
+              aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+            >
+              {isFullscreen ? (
+                <Minimize2 className="h-4 w-4" />
+              ) : (
+                <Maximize2 className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
 
         {/* Controls Panel */}
         {!showCollaboration && (
@@ -185,7 +206,37 @@ export function ViewerLayout({
                 {/* Scrollable Content */}
                 <div className="flex-1 overflow-y-auto">
                   <div className="space-y-6 p-4">
-                    <ControlsPanel />
+                    {/* Interactive Features Section */}
+                    <div className="space-y-3">
+                      <h3 className="text-sm font-semibold text-foreground">
+                        Interactive Features
+                      </h3>
+
+                      {/* Hydrogen Bonds Toggle */}
+                      <HydrogenBondsToggle />
+
+                      {/* Measurements Toggle */}
+                      <Button
+                        variant={showMeasurements ? 'default' : 'outline'}
+                        onClick={() => setShowMeasurements(!showMeasurements)}
+                        className="w-full justify-start"
+                      >
+                        {showMeasurements ? 'Hide' : 'Show'} Measurements
+                      </Button>
+
+                      {/* Sequence Viewer Toggle */}
+                      <Button
+                        variant={showSequenceViewer ? 'default' : 'outline'}
+                        onClick={() => setShowSequenceViewer(!showSequenceViewer)}
+                        className="w-full justify-start"
+                      >
+                        {showSequenceViewer ? 'Hide' : 'Show'} Sequence
+                      </Button>
+                    </div>
+
+                    <div className="border-t pt-6">
+                      <ControlsPanel />
+                    </div>
 
                     <div className="border-t pt-6">
                       <SelectionPanel />
@@ -214,14 +265,27 @@ export function ViewerLayout({
           </div>
         )}
 
-        {/* Collaboration Panel */}
-        {enableCollaboration && showCollaboration && (
-          <CollaborationPanel
-            userId={userId}
-            userName={userName}
-            structureId={pdbId}
-            onClose={() => setShowCollaboration(false)}
-          />
+          {/* Collaboration Panel */}
+          {enableCollaboration && showCollaboration && (
+            <CollaborationPanel
+              userId={userId}
+              userName={userName}
+              structureId={pdbId}
+              onClose={() => setShowCollaboration(false)}
+            />
+          )}
+        </div>
+
+        {/* Sequence Viewer at Bottom */}
+        {showSequenceViewer && !showCollaboration && (
+          <div className="h-64 border-t bg-background">
+            <SequenceViewer
+              onResidueClick={(chainId, residueSeq) => {
+                console.log(`Selected residue ${chainId}:${residueSeq}`);
+              }}
+              className="h-full"
+            />
+          </div>
         )}
       </div>
     </div>
