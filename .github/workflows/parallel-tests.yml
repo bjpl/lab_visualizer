@@ -77,7 +77,7 @@ jobs:
           node-version: '20'
 
       - name: Download all coverage reports
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           pattern: test-results-*
           path: coverage-reports/
