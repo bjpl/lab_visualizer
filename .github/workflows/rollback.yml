@@ -114,7 +114,7 @@ jobs:
           BASE_URL: ${{ steps.rollback-deploy.outputs.url }}
 
       - name: Create rollback incident report
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const report = `
@@ -157,7 +157,7 @@ jobs:
             });
 
       - name: Notify team
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             console.log('🚨 Rollback completed for ${{ inputs.environment }}');

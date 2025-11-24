@@ -91,7 +91,7 @@ jobs:
           BASE_URL: https://lab-visualizer.vercel.app
 
       - name: Notify deployment success
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const sha = context.sha.substring(0, 7);
