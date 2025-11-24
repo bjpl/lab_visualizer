@@ -122,6 +122,51 @@ export interface StructureMetadata {
 }
 
 /**
+ * Hover information for tooltip display
+ */
+export interface HoverInfo {
+  pdbId: string;
+  modelIndex: number;
+  chainId: string;
+  residueSeq: number;
+  residueName: string;
+  atomName?: string;
+  atomElement?: string;
+  position: [number, number, number];
+}
+
+/**
+ * Measurement result data
+ */
+export interface MeasurementResult {
+  id: string;
+  type: 'distance' | 'angle' | 'dihedral';
+  value: number;
+  unit: string;
+  label: string;
+  participants: Array<{
+    chainId: string;
+    residueSeq: number;
+    residueName: string;
+    atomName?: string;
+  }>;
+  timestamp: number;
+}
+
+/**
+ * Selection information
+ */
+export interface SelectionInfo {
+  id: string;
+  type: 'atom' | 'residue' | 'chain';
+  chainId: string;
+  residueSeq: number;
+  residueName: string;
+  atomName?: string;
+  position: [number, number, number];
+}
+
+/**
  * Mol* service events
  */
 export interface MolstarEvents {
@@ -130,6 +175,9 @@ export interface MolstarEvents {
   'color-scheme-changed': (scheme: MolstarColorScheme) => void;
   'selection-changed': (query: SelectionQuery) => void;
   'camera-changed': (snapshot: CameraSnapshot) => void;
+  'hover-info': (info: HoverInfo | null) => void;
+  'measurement-added': (measurement: MeasurementResult) => void;
+  'selection-info': (info: SelectionInfo | null) => void;
   'error': (error: Error) => void;
 }
 
