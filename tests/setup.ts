@@ -285,3 +285,6 @@ const sessionStorageMock = (() => {
 Object.defineProperty(global, 'sessionStorage', {
   value: sessionStorageMock,
 });
+
+// Mock Element.scrollIntoView
+Element.prototype.scrollIntoView = vi.fn();

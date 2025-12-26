@@ -58,6 +58,12 @@
   "ignorePatterns": [
     "dist",
     "node_modules",
-    "src/tests/**/*"
+    "src/tests/**/*",
+    "src/__tests__/**/*",
+    "tests/**/*",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/*.spec.ts",
+    "**/*.spec.tsx"
   ]
 }

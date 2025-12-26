@@ -441,12 +441,13 @@ describe('IndexedDBCache', () => {
 
   describe('Error Handling', () => {
     it('should handle database initialization errors gracefully', async () => {
-      (openDB as any).mockRejectedValue(new Error('DB init failed'));
+      (openDB as any).mockRejectedValueOnce(new Error('DB init failed'));
 
-      await expect(async () => {
-        const failCache = new IndexedDBCache();
-        await new Promise((resolve) => setTimeout(resolve, 100));
-      }).rejects.toThrow();
+      // Create cache instance - initialization happens asynchronously
+      const failCache = new IndexedDBCache();
+
+      // Operations should reject when initialization fails
+      await expect(failCache.getPDB('test-key')).rejects.toThrow();
     });
 
     it('should handle quota exceeded errors', async () => {
