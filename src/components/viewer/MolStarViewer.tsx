@@ -37,7 +37,7 @@ export function MolStarViewer({
   const wrapperRef = useRef<HTMLDivElement>(null);
   const molstarContainerRef = useRef<HTMLDivElement | null>(null);
   const [isReady, setIsReady] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Start as loading since initialization happens on mount
   const [initError, setInitError] = useState<string | null>(null);
 
   // Track initialization state to prevent double-init in strict mode

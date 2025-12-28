@@ -374,7 +374,7 @@ export class LODManager {
   }
 
   /**
-   * Calculate memory estimate for structure
+   * Calculate memory estimate for structure at a given LOD level
    */
   estimateMemoryUsage(complexity: StructureComplexity, level: LODLevel): number {
     const config = this.getConfig(level);
@@ -384,9 +384,22 @@ export class LODManager {
     // - Geometry: 32 bytes per vertex * vertices per atom
     // - Textures: additional 20%
     // - Buffers: additional 10%
-    const verticesPerAtom = config.features.surfaces ? 50 : 20;
+
+    // Use level config to determine features (surfaces add more vertices)
+    // Higher LOD levels include surfaces which use more memory
+    const hasSurfacesForLevel = config.features.surfaces && complexity.hasSurfaces;
+    const verticesPerAtom = hasSurfacesForLevel ? 50 : 20;
+
     const geometryMemory = atomsToRender * verticesPerAtom * 32;
-    const totalMemory = geometryMemory * 1.3; // Add overhead
+
+    // For FULL level, also account for structure data overhead
+    // when dealing with very large structures
+    const structureDataOverhead =
+      level === LODLevel.FULL && complexity.atomCount > config.maxAtoms
+        ? (complexity.atomCount - config.maxAtoms) * 8 // ~8 bytes per additional atom for data
+        : 0;
+
+    const totalMemory = (geometryMemory + structureDataOverhead) * 1.3;
 
     return totalMemory;
   }

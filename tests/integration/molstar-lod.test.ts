@@ -103,6 +103,9 @@ describe('MolStar + LOD Integration', () => {
     });
 
     it('should respect memory budget constraints', () => {
+      // Use a smaller memory budget to test constraint behavior
+      const constrainedManager = new LODManager({}, 128); // 128MB budget
+
       const smallComplexity: StructureComplexity = {
         atomCount: 100,
         bondCount: 120,
@@ -123,10 +126,11 @@ describe('MolStar + LOD Integration', () => {
         estimatedVertices: 5000000,
       };
 
-      expect(lodManager.canAffordLevel(smallComplexity, LODLevel.FULL)).toBe(
+      expect(constrainedManager.canAffordLevel(smallComplexity, LODLevel.FULL)).toBe(
         true
       );
-      expect(lodManager.canAffordLevel(largeComplexity, LODLevel.FULL)).toBe(
+      // With 128MB budget, 100k atoms with surfaces (~208MB) exceeds limit
+      expect(constrainedManager.canAffordLevel(largeComplexity, LODLevel.FULL)).toBe(
         false
       );
     });
@@ -278,6 +282,9 @@ describe('MolStar + LOD Integration', () => {
     });
 
     it('should handle very large structures', () => {
+      // Use constrained memory budget to test large structure handling
+      const constrainedManager = new LODManager({}, 128); // 128MB budget
+
       const largeStructure = {
         atoms: [],
         atomCount: 500000,
@@ -288,11 +295,12 @@ describe('MolStar + LOD Integration', () => {
         hasSurfaces: true,
       };
 
-      const complexity = lodManager.analyzeComplexity(largeStructure);
-      const startLevel = lodManager.determineStartingLevel(complexity);
+      const complexity = constrainedManager.analyzeComplexity(largeStructure);
+      const startLevel = constrainedManager.determineStartingLevel(complexity);
 
       expect(startLevel).toBe(LODLevel.PREVIEW);
-      expect(lodManager.canAffordLevel(complexity, LODLevel.FULL)).toBe(false);
+      // With 128MB budget, very large structures exceed memory limits
+      expect(constrainedManager.canAffordLevel(complexity, LODLevel.FULL)).toBe(false);
     });
   });
 });

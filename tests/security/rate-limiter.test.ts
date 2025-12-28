@@ -8,27 +8,93 @@ import { RedisRateLimiter, createRateLimiter } from '@/middleware/rateLimiter';
 import { RateLimitTier } from '@/types/rateLimit.types';
 import { Request, Response, NextFunction } from 'express';
 
+// Stateful mock for Redis rate limiting
+const rateLimitStore: Map<string, number[]> = new Map();
+
+const createRedisMock = () => {
+  let localConnectCallback: Function | null = null;
+
+  const mock = {
+    connect: vi.fn().mockImplementation(() => {
+      // Trigger the connect callback in a microtask to simulate real Redis
+      return new Promise<void>((resolve) => {
+        queueMicrotask(() => {
+          if (localConnectCallback) {
+            localConnectCallback();
+          }
+          resolve();
+        });
+      });
+    }),
+    on: vi.fn((event: string, callback: Function) => {
+      // Store the connect callback for this mock instance
+      if (event === 'connect') {
+        localConnectCallback = callback;
+      }
+      return mock; // Return mock for chaining
+    }),
+    eval: vi.fn().mockImplementation((script: string, numKeys: number, key: string, now: string, windowMs: string, maxRequests: string) => {
+      const nowNum = parseInt(now);
+      const windowMsNum = parseInt(windowMs);
+      const limit = parseInt(maxRequests);
+      const windowStart = nowNum - windowMsNum;
+
+      // Get or create entry for this key
+      let timestamps = rateLimitStore.get(key) || [];
+
+      // Remove expired entries
+      timestamps = timestamps.filter(ts => ts > windowStart);
+
+      // Check if under limit
+      if (timestamps.length < limit) {
+        timestamps.push(nowNum);
+        rateLimitStore.set(key, timestamps);
+        return Promise.resolve([1, limit - timestamps.length, nowNum + windowMsNum]);
+      } else {
+        // Over limit - return blocked
+        const oldestTs = timestamps[0] || nowNum;
+        return Promise.resolve([0, 0, oldestTs + windowMsNum]);
+      }
+    }),
+    zadd: vi.fn().mockResolvedValue(1),
+    expire: vi.fn().mockResolvedValue(1),
+    zrangebyscore: vi.fn().mockResolvedValue([]),
+    del: vi.fn().mockImplementation((key: string) => {
+      rateLimitStore.delete(key);
+      return Promise.resolve(1);
+    }),
+    quit: vi.fn().mockResolvedValue(undefined),
+  };
+  return mock;
+};
+
 // Mock ioredis
 vi.mock('ioredis', () => {
   return {
-    default: vi.fn().mockImplementation(() => ({
-      connect: vi.fn().mockResolvedValue(undefined),
-      on: vi.fn(),
-      eval: vi.fn(),
-      zadd: vi.fn().mockResolvedValue(1),
-      expire: vi.fn().mockResolvedValue(1),
-      zrangebyscore: vi.fn().mockResolvedValue([]),
-      del: vi.fn().mockResolvedValue(1),
-      quit: vi.fn().mockResolvedValue(undefined),
-    })),
+    default: vi.fn().mockImplementation(() => createRedisMock()),
   };
 });
 
 describe('RedisRateLimiter', () => {
   let rateLimiter: RedisRateLimiter;
+  let redisMock: ReturnType<typeof createRedisMock>;
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    // Clear the rate limit store between tests
+    rateLimitStore.clear();
+
+    // Create a fresh mock for this test
+    redisMock = createRedisMock();
+
     rateLimiter = new RedisRateLimiter();
+    // Allow time for async connection setup
+    await new Promise(resolve => setTimeout(resolve, 50));
+    // Flush microtasks
+    await Promise.resolve();
+
+    // Force Redis availability and assign mock directly
+    (rateLimiter as any).isRedisAvailable = true;
+    (rateLimiter as any).redis = redisMock;
   });
 
   afterEach(async () => {

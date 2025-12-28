@@ -9,7 +9,7 @@
  * Cross-platform support for Mac (Cmd) and Windows/Linux (Ctrl)
  */
 
-import { useEffect, useCallback, useState, useRef } from 'react';
+import { useEffect, useLayoutEffect, useCallback, useState, useRef } from 'react';
 import { useSelectionStore } from '@/stores/selection-store';
 
 /**
@@ -115,6 +115,10 @@ export function useKeyboardShortcuts(
   // Track active keys to prevent repeat events
   const activeKeysRef = useRef<Set<string>>(new Set());
 
+  // Use refs to always have access to latest values
+  const stateRef = useRef({ measurementMode, isShiftPressed, isCtrlPressed, isAltPressed });
+  stateRef.current = { measurementMode, isShiftPressed, isCtrlPressed, isAltPressed };
+
   /**
    * Set measurement mode and notify parent
    */
@@ -131,16 +135,32 @@ export function useKeyboardShortcuts(
     const key = keyEvent.key.toLowerCase();
     const code = keyEvent.code;
 
-    // Prevent handling when typing in input fields
-    const target = keyEvent.target as HTMLElement;
-    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+    // Track modifier keys FIRST, regardless of target
+    // Note: key is already lowercased at this point
+    if (keyEvent.shiftKey || key === 'shift') setIsShiftPressed(true);
+    if (keyEvent.ctrlKey || keyEvent.metaKey || key === 'control' || key === 'meta') setIsCtrlPressed(true);
+    if (keyEvent.altKey || key === 'alt') setIsAltPressed(true);
+
+    // Prevent handling shortcuts when typing in input fields
+    const target = keyEvent.target as HTMLElement | null;
+    const activeEl = document.activeElement as HTMLElement | null;
+
+    // Check both event target and active element for input contexts
+    const isTargetInput = target?.tagName === 'INPUT' ||
+                          target?.tagName === 'TEXTAREA' ||
+                          target?.isContentEditable === true ||
+                          target?.getAttribute?.('contenteditable') === 'true' ||
+                          (target as HTMLElement)?.contentEditable === 'true';
+
+    const isActiveInput = activeEl?.tagName === 'INPUT' ||
+                          activeEl?.tagName === 'TEXTAREA' ||
+                          activeEl?.isContentEditable === true ||
+                          activeEl?.getAttribute?.('contenteditable') === 'true' ||
+                          (activeEl as HTMLElement)?.contentEditable === 'true';
+
+    if (isTargetInput || isActiveInput) {
       return;
     }
-
-    // Track modifier keys
-    if (keyEvent.shiftKey) setIsShiftPressed(true);
-    if (isControlKey(keyEvent)) setIsCtrlPressed(true);
-    if (keyEvent.altKey) setIsAltPressed(true);
 
     // Prevent repeat events for the same key
     if (activeKeysRef.current.has(code)) {
@@ -269,26 +289,38 @@ export function useKeyboardShortcuts(
     activeKeysRef.current.clear();
   }, []);
 
+  // Store handlers in refs so event listeners always call latest version
+  const handlersRef = useRef({ handleKeyDown, handleKeyUp, handleBlur });
+  handlersRef.current = { handleKeyDown, handleKeyUp, handleBlur };
+
   /**
    * Setup and cleanup keyboard event listeners
+   * Use useLayoutEffect to ensure listeners are attached synchronously
    */
-  useEffect(() => {
+  const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
+
+  useIsomorphicLayoutEffect(() => {
     if (!enabled) {
       return;
     }
 
     const target = targetElement || window;
 
+    // Wrapper functions that call the latest handlers from ref
+    const onKeyDown = (e: Event) => handlersRef.current.handleKeyDown(e);
+    const onKeyUp = (e: Event) => handlersRef.current.handleKeyUp(e);
+    const onBlur = () => handlersRef.current.handleBlur();
+
     // Add event listeners
-    target.addEventListener('keydown', handleKeyDown);
-    target.addEventListener('keyup', handleKeyUp);
-    window.addEventListener('blur', handleBlur);
+    target.addEventListener('keydown', onKeyDown);
+    target.addEventListener('keyup', onKeyUp);
+    window.addEventListener('blur', onBlur);
 
     // Cleanup
     return () => {
-      target.removeEventListener('keydown', handleKeyDown);
-      target.removeEventListener('keyup', handleKeyUp);
-      window.removeEventListener('blur', handleBlur);
+      target.removeEventListener('keydown', onKeyDown);
+      target.removeEventListener('keyup', onKeyUp);
+      window.removeEventListener('blur', onBlur);
 
       // Reset states on cleanup
       setIsShiftPressed(false);
@@ -296,7 +328,7 @@ export function useKeyboardShortcuts(
       setIsAltPressed(false);
       activeKeysRef.current.clear();
     };
-  }, [enabled, handleKeyDown, handleKeyUp, handleBlur, targetElement]);
+  }, [enabled, targetElement]);
 
   return {
     measurementMode,

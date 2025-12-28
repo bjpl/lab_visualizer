@@ -81,31 +81,106 @@ export class XSSSanitizer {
     }
 
     const removed: string[] = [];
-    const config = this.buildDOMPurifyConfig();
 
-    // Track removed elements using type-safe hooks
+    // Clear any existing hooks first
+    DOMPurify.removeAllHooks();
+
+    // Build base config
+    const config: any = {
+      ALLOWED_TAGS: this.config.allowedTags,
+      ALLOWED_ATTR: this.flattenAllowedAttributes(),
+      ALLOWED_URI_REGEXP: this.buildAllowedURIRegex(),
+      KEEP_CONTENT: true,
+      RETURN_DOM: false,
+      RETURN_DOM_FRAGMENT: false,
+      RETURN_TRUSTED_TYPE: false,
+      ALLOW_DATA_ATTR: this.config.allowDataAttributes || false,
+    };
+
+    // Track removed elements using DOMPurify's removed elements array
+    const removedElements: any[] = [];
     (DOMPurify as any).addHook('uponSanitizeElement', (node: Element, data: any) => {
-      if (data.allowedTags && !data.allowedTags[data.tagName]) {
-        removed.push(`Element: <${data.tagName}>`);
+      const tagName = data.tagName?.toLowerCase();
+      // Skip text nodes, comments, and internal DOMPurify nodes
+      if (!tagName || tagName.startsWith('#') || tagName === 'body' || tagName === 'html') {
+        return;
+      }
+      if (this.config.allowedTags && !this.config.allowedTags.includes(tagName)) {
+        removedElements.push({ type: 'element', tag: tagName });
       }
     });
 
-    (DOMPurify as any).addHook('uponSanitizeAttribute', (node: Element, data: any) => {
-      if (!data.keepAttr) {
-        removed.push(`Attribute: ${data.attrName} on <${node.tagName}>`);
+    // Track removed attributes
+    DOMPurify.addHook('uponSanitizeAttribute', (node: Element, data: any) => {
+      const attrName = data.attrName?.toLowerCase();
+      const tagName = node.tagName?.toLowerCase();
+      // Skip if no attribute name or if it's on internal nodes
+      if (!attrName || !tagName || tagName.startsWith('#') || tagName === 'body' || tagName === 'html') {
+        return;
+      }
+      // Check if this attribute is not in our allowed list
+      if (this.isAttributeRemoved(tagName, attrName)) {
+        removedElements.push({ type: 'attribute', attr: attrName, tag: tagName });
       }
     });
 
-    const sanitized = DOMPurify.sanitize(html, { ...config, RETURN_TRUSTED_TYPE: false }) as unknown as string;
+    // Block data: URLs and track their removal
+    DOMPurify.addHook('afterSanitizeAttributes', (node: Element) => {
+      if (node.hasAttribute('src')) {
+        const src = node.getAttribute('src') || '';
+        if (src.toLowerCase().startsWith('data:')) {
+          removedElements.push({ type: 'attribute', attr: 'src', tag: node.tagName.toLowerCase(), reason: 'data: URL' });
+          node.removeAttribute('src');
+        }
+      }
+      if (node.hasAttribute('href')) {
+        const href = node.getAttribute('href') || '';
+        if (href.toLowerCase().startsWith('data:') || href.toLowerCase().startsWith('javascript:')) {
+          removedElements.push({ type: 'attribute', attr: 'href', tag: node.tagName.toLowerCase(), reason: 'unsafe URL' });
+          node.removeAttribute('href');
+        }
+      }
+    });
+
+    const sanitized = DOMPurify.sanitize(html, config) as unknown as string;
 
     // Remove hooks after sanitization
     DOMPurify.removeAllHooks();
+
+    // Build removed array from tracked elements
+    for (const item of removedElements) {
+      if (item.type === 'element') {
+        removed.push(`Element: <${item.tag}>`);
+      } else if (item.type === 'attribute') {
+        removed.push(`Attribute: ${item.attr} on <${item.tag}>`);
+      }
+    }
 
     return {
       sanitized,
       removed,
       safe: removed.length === 0
     };
+  }
+
+  /**
+   * Check if an attribute should be removed
+   */
+  private isAttributeRemoved(tagName: string, attrName: string): boolean {
+    // Event handlers are always removed
+    if (attrName.startsWith('on')) {
+      return true;
+    }
+
+    // Check if attribute is in the allowed list for this tag
+    const allowedAttrs = this.config.allowedAttributes?.[tagName];
+    if (!allowedAttrs) {
+      // If no specific attrs defined for this tag, check global attrs
+      const allAllowedAttrs = this.flattenAllowedAttributes();
+      return !allAllowedAttrs.includes(attrName);
+    }
+
+    return !allowedAttrs.includes(attrName);
   }
 
   /**
@@ -181,7 +256,9 @@ export class XSSSanitizer {
       KEEP_CONTENT: true,
       RETURN_DOM: false,
       RETURN_DOM_FRAGMENT: false,
-      RETURN_TRUSTED_TYPE: false
+      RETURN_TRUSTED_TYPE: false,
+      // Block data: and javascript: URLs
+      FORBID_ATTR: [],
     };
 
     if (this.config.stripComments) {
@@ -191,6 +268,24 @@ export class XSSSanitizer {
     if (this.config.allowDataAttributes) {
       config.ALLOW_DATA_ATTR = true;
     }
+
+    // Add hook to block data: URLs in src/href attributes
+    DOMPurify.removeAllHooks();
+    DOMPurify.addHook('afterSanitizeAttributes', (node: Element) => {
+      // Block data: URLs in src and href
+      if (node.hasAttribute('src')) {
+        const src = node.getAttribute('src') || '';
+        if (src.toLowerCase().startsWith('data:')) {
+          node.removeAttribute('src');
+        }
+      }
+      if (node.hasAttribute('href')) {
+        const href = node.getAttribute('href') || '';
+        if (href.toLowerCase().startsWith('data:') || href.toLowerCase().startsWith('javascript:')) {
+          node.removeAttribute('href');
+        }
+      }
+    });
 
     return config;
   }

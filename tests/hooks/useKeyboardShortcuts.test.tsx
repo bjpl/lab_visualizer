@@ -442,12 +442,14 @@ describe('useKeyboardShortcuts', () => {
       div.focus();
 
       act(() => {
+        // Dispatch directly on window with target set to contenteditable div
+        // This tests the handler's target checking logic
         const event = new KeyboardEvent('keydown', {
           key: 'd',
           bubbles: true,
         });
-        Object.defineProperty(event, 'target', { value: div });
-        div.dispatchEvent(event);
+        Object.defineProperty(event, 'target', { value: div, writable: false });
+        window.dispatchEvent(event);
       });
 
       expect(onMeasurementModeChange).not.toHaveBeenCalled();
