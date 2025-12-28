@@ -263,3 +263,70 @@ export interface LODConfig {
   targetFPS?: number;
   onProgress?: LODProgressCallback;
 }
+
+/**
+ * Sequence data from structure
+ */
+export interface SequenceData {
+  chains: Array<{
+    chainId: string;
+    sequence: string;
+    residueIds: number[];
+    residueNames: string[];
+  }>;
+  totalResidues: number;
+}
+
+/**
+ * Residue selection for highlighting or focusing
+ */
+export interface ResidueSelection {
+  chainId: string;
+  residueIds: number[];
+}
+
+/**
+ * Camera focus options
+ */
+export interface FocusOptions {
+  duration?: number; // Animation duration in ms
+  radius?: number; // Focus radius
+}
+
+/**
+ * Interaction detection options
+ */
+export interface InteractionOptions {
+  detectHBonds?: boolean;
+  detectSaltBridges?: boolean;
+  detectHydrophobic?: boolean;
+  detectPiPi?: boolean;
+  distanceCutoffs?: {
+    hbond?: number;
+    saltBridge?: number;
+    hydrophobic?: number;
+    piPi?: number;
+  };
+}
+
+/**
+ * Detected molecular interaction
+ */
+export interface Interaction {
+  id: string;
+  type: 'hbond' | 'salt-bridge' | 'hydrophobic' | 'pi-pi';
+  residue1: {
+    chainId: string;
+    residueSeq: number;
+    residueName: string;
+    atomName?: string;
+  };
+  residue2: {
+    chainId: string;
+    residueSeq: number;
+    residueName: string;
+    atomName?: string;
+  };
+  distance: number;
+  energy?: number;
+}

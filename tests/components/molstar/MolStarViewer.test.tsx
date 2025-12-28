@@ -10,6 +10,28 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { MolStarViewer } from '../../../src/components/viewer/MolStarViewer';
 import '@testing-library/jest-dom';
 
+// Mock the molstar service module
+vi.mock('@/services/molstar-service', () => {
+  const mockMolstarService = {
+    initialize: vi.fn().mockImplementation(() =>
+      // Add small delay to simulate async initialization
+      new Promise((resolve) => setTimeout(resolve, 10))
+    ),
+    loadStructureById: vi.fn().mockImplementation(() =>
+      // Add small delay to simulate async loading
+      new Promise((resolve) => setTimeout(resolve, 10))
+    ),
+    dispose: vi.fn(),
+    clear: vi.fn(),
+    focus: vi.fn(),
+    getPlugin: vi.fn(() => null),
+  };
+
+  return {
+    molstarService: mockMolstarService,
+  };
+});
+
 describe('MolStarViewer Component', () => {
   let mockCallbacks: {
     onLoadStart: ReturnType<typeof vi.fn>;
@@ -197,10 +219,13 @@ describe('MolStarViewer Component', () => {
   });
 
   describe('Lifecycle', () => {
-    it('should initialize on mount', () => {
+    it('should initialize on mount', async () => {
       render(<MolStarViewer {...mockCallbacks} />);
 
-      expect(mockCallbacks.onLoadStart).toHaveBeenCalled();
+      // Wait for async initialization to start
+      await waitFor(() => {
+        expect(mockCallbacks.onLoadStart).toHaveBeenCalled();
+      });
     });
 
     it('should cleanup on unmount', () => {
@@ -211,10 +236,11 @@ describe('MolStarViewer Component', () => {
     });
 
     it('should handle multiple mount/unmount cycles', () => {
-      const { unmount, rerender } = render(<MolStarViewer />);
-
+      const { unmount } = render(<MolStarViewer />);
       unmount();
-      rerender(<MolStarViewer />);
+
+      // Render a new instance after unmounting
+      render(<MolStarViewer />);
 
       expect(screen.getByRole('img')).toBeInTheDocument();
     });

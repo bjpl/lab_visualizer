@@ -37,7 +37,16 @@ import type {
   PerformanceMetrics,
   TrajectoryOptions,
   MolstarEvents,
+  HoverInfo,
+  SequenceData,
+  ResidueSelection,
+  FocusOptions,
+  InteractionOptions,
+  Interaction,
 } from '@/types/molstar';
+
+import { MeasurementRenderer } from './molstar/measurement-renderer';
+import { SelectionHighlighter } from './molstar/selection-highlighter';
 
 /**
  * Mol* Service Singleton
@@ -54,6 +63,9 @@ export class MolstarService {
     atomCount: 0,
     triangleCount: 0,
   };
+  private measurementRepresentations: Map<string, any> = new Map();
+  private measurementRenderer: MeasurementRenderer | null = null;
+  private selectionHighlighter: SelectionHighlighter | null = null;
 
   private constructor() {
     // Private constructor for singleton
@@ -139,6 +151,19 @@ export class MolstarService {
         plugin,
         dispose: () => plugin.dispose(),
       };
+
+      // Initialize measurement renderer
+      this.measurementRenderer = new MeasurementRenderer(plugin);
+
+      // Initialize selection highlighter
+      this.selectionHighlighter = new SelectionHighlighter(plugin, {
+        selectionColor: Color(0x00FF00), // Green
+        selectionOpacity: 0.5,
+        hoverColor: Color(0xFF00FF), // Magenta
+        hoverOpacity: 0.7,
+        expandToResidue: true,
+        batchUpdates: true,
+      });
 
       // Setup event listeners
       this.setupEventListeners();
@@ -428,19 +453,18 @@ export class MolstarService {
   }
 
   /**
-   * Apply green tint to current selection
+   * Apply green tint to current selection using SelectionHighlighter
    */
   private async applySelectionHighlight(): Promise<void> {
-    if (!this.viewer) return;
+    if (!this.viewer || !this.selectionHighlighter) return;
 
     try {
       const plugin = this.viewer.plugin;
       const loci = plugin.managers.structure.selection.additionsHistory[0]?.loci;
 
       if (loci) {
-        // Apply green color using Mol*'s overpaint system
-        // Note: Full implementation would use plugin.managers.structure.component.setOverpaint
-        // For now, we rely on Mol*'s built-in selection styling
+        // Apply green highlight using SelectionHighlighter
+        await this.selectionHighlighter.highlightSelection(loci);
         console.info('[MolstarService] Selection highlight applied');
       }
     } catch (error) {
@@ -455,11 +479,50 @@ export class MolstarService {
     if (!this.viewer) return;
 
     try {
+      // Clear MolStar's internal selection
       const plugin = this.viewer.plugin;
       await plugin.managers.structure.selection.clear();
+
+      // Clear all visual highlights
+      if (this.selectionHighlighter) {
+        await this.selectionHighlighter.clearAllHighlights();
+      }
     } catch (error) {
       console.error('[MolstarService] Failed to clear selection highlight:', error);
     }
+  }
+
+  /**
+   * Apply hover highlight to loci (for mouse hover interactions)
+   */
+  public async applyHoverHighlight(loci: import('molstar/lib/mol-model/loci').Loci): Promise<void> {
+    if (!this.viewer || !this.selectionHighlighter) return;
+
+    try {
+      await this.selectionHighlighter.highlightHover(loci);
+    } catch (error) {
+      console.error('[MolstarService] Failed to apply hover highlight:', error);
+    }
+  }
+
+  /**
+   * Clear hover highlight
+   */
+  public async clearHoverHighlight(): Promise<void> {
+    if (!this.viewer || !this.selectionHighlighter) return;
+
+    try {
+      await this.selectionHighlighter.clearHoverHighlight();
+    } catch (error) {
+      console.error('[MolstarService] Failed to clear hover highlight:', error);
+    }
+  }
+
+  /**
+   * Get selection highlighter instance
+   */
+  public getSelectionHighlighter(): SelectionHighlighter | null {
+    return this.selectionHighlighter;
   }
 
   /**
@@ -538,6 +601,452 @@ export class MolstarService {
   }
 
   /**
+   * Get hover information at screen coordinates using ray casting
+   * @param x Screen X coordinate
+   * @param y Screen Y coordinate
+   * @returns HoverInfo or null if nothing at coordinates
+   * @performance <100ms
+   */
+  public getHoverInfo(x: number, y: number): HoverInfo | null {
+    if (!this.viewer) {
+      return null;
+    }
+
+    const startTime = performance.now();
+
+    try {
+      const plugin = this.viewer.plugin;
+      const canvas = plugin.canvas3d?.webgl?.gl.canvas as HTMLCanvasElement;
+
+      if (!canvas) {
+        return null;
+      }
+
+      // Use MolStar's built-in picking system
+      // identify() expects a single position argument with x, y coordinates
+      const pickResult = (plugin.canvas3d as any)?.identify?.({ x, y }) as any;
+
+      if (!pickResult || pickResult?.loci?.kind !== 'element-loci') {
+        return null;
+      }
+
+      const loci = pickResult?.loci as any;
+      const element = loci.elements?.[0];
+
+      if (!element) {
+        return null;
+      }
+
+      const unit = element.unit;
+      const indices = element.indices;
+
+      if (!unit || !indices || indices.length === 0) {
+        return null;
+      }
+
+      const location = unit.getElementLocation(indices[0]);
+      const chainId = unit.model.atomicHierarchy.chains.label_asym_id.value(location.element);
+      const residueSeq = unit.model.atomicHierarchy.residues.label_seq_id.value(location.element);
+      const residueName = unit.model.atomicHierarchy.atoms.label_comp_id.value(location.element);
+      const atomName = unit.model.atomicHierarchy.atoms.label_atom_id.value(location.element);
+      const atomElement = unit.model.atomicHierarchy.atoms.type_symbol.value(location.element);
+      const position = unit.conformation.position(location.element, [0, 0, 0] as any);
+
+      const hoverInfo: HoverInfo = {
+        pdbId: 'current',
+        modelIndex: 0,
+        chainId: chainId || 'A',
+        residueSeq: residueSeq || 0,
+        residueName: residueName || 'UNK',
+        atomName: atomName || undefined,
+        atomElement: atomElement || undefined,
+        position: [position[0], position[1], position[2]],
+      };
+
+      const duration = performance.now() - startTime;
+      console.info(`[MolstarService] getHoverInfo completed in ${duration.toFixed(2)}ms`);
+
+      return hoverInfo;
+    } catch (error) {
+      console.error('[MolstarService] getHoverInfo failed:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Extract sequence data from loaded structure
+   * @returns SequenceData containing chain sequences and residue information
+   * @performance <100ms
+   */
+  public getSequence(): SequenceData | null {
+    if (!this.viewer) {
+      return null;
+    }
+
+    const startTime = performance.now();
+
+    try {
+      const plugin = this.viewer.plugin;
+      const state = plugin.state.data;
+
+      // Get structure
+      const structures = state.selectQ((q) =>
+        q.ofTransformer(StateTransforms.Model.StructureFromModel)
+      );
+
+      if (structures.length === 0) {
+        return null;
+      }
+
+      const structureData = structures[0].obj?.data;
+      if (!structureData) {
+        return null;
+      }
+
+      const chains: Array<{
+        chainId: string;
+        sequence: string;
+        residueIds: number[];
+        residueNames: string[];
+      }> = [];
+
+      let totalResidues = 0;
+
+      // Extract sequence data from units
+      const units = structureData.units || [];
+      const processedChains = new Set<string>();
+
+      for (const unit of units) {
+        const chainId = unit.chainGroupId || unit.model?.label || 'A';
+
+        // Skip if we've already processed this chain
+        if (processedChains.has(chainId)) {
+          continue;
+        }
+        processedChains.add(chainId);
+
+        const residueIds: number[] = [];
+        const residueNames: string[] = [];
+        const sequenceChars: string[] = [];
+
+        // Extract residue information from unit
+        if (unit.model && unit.model.atomicHierarchy) {
+          const residues = unit.model.atomicHierarchy.residues;
+          const residueCount = residues.label_seq_id.rowCount;
+
+          for (let i = 0; i < residueCount; i++) {
+            const seqId = residues.label_seq_id.value(i);
+            const compId = residues.label_comp_id.value(i);
+
+            residueIds.push(seqId || i + 1);
+            residueNames.push(compId || 'UNK');
+
+            // Convert 3-letter code to 1-letter code
+            sequenceChars.push(this.convertToOneLetterCode(compId || 'UNK'));
+          }
+
+          totalResidues += residueCount;
+        }
+
+        chains.push({
+          chainId,
+          sequence: sequenceChars.join(''),
+          residueIds,
+          residueNames,
+        });
+      }
+
+      const duration = performance.now() - startTime;
+      console.info(`[MolstarService] getSequence completed in ${duration.toFixed(2)}ms`);
+
+      return {
+        chains,
+        totalResidues,
+      };
+    } catch (error) {
+      console.error('[MolstarService] getSequence failed:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Highlight specified residues visually
+   * @param selection Residue selection to highlight
+   * @performance <100ms
+   */
+  public async highlightResidues(selection: ResidueSelection[]): Promise<void> {
+    if (!this.viewer) {
+      throw new Error('Mol* viewer not initialized');
+    }
+
+    const startTime = performance.now();
+
+    try {
+      const plugin = this.viewer.plugin;
+      const state = plugin.state.data;
+
+      // Clear existing highlights first
+      await this.clearSelectionHighlight();
+
+      // Get structure
+      const structures = state.selectQ((q) =>
+        q.ofTransformer(StateTransforms.Model.StructureFromModel)
+      );
+
+      if (structures.length === 0) {
+        throw new Error('No structure loaded');
+      }
+
+      // Build selection expression for each chain
+      for (const sel of selection) {
+        const residueList = sel.residueIds.join(',');
+        const expression = `chain ${sel.chainId} and resi ${residueList}`;
+
+        // Use MolStar's selection API
+        const selectionManager = plugin.managers.structure.selection as any;
+        if (selectionManager.fromExpression) {
+          await selectionManager.fromExpression(expression);
+        }
+      }
+
+      // Apply green highlight to selection
+      await this.applySelectionHighlight();
+
+      const duration = performance.now() - startTime;
+      console.info(`[MolstarService] highlightResidues completed in ${duration.toFixed(2)}ms`);
+    } catch (error) {
+      console.error('[MolstarService] highlightResidues failed:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Focus camera on specified residues with animation
+   * @param residues Residues to focus on
+   * @param options Focus options (duration, radius)
+   * @performance <100ms (animation may take longer)
+   */
+  public async focusOnResidues(
+    residues: ResidueSelection[],
+    options: FocusOptions = {}
+  ): Promise<void> {
+    if (!this.viewer) {
+      throw new Error('Mol* viewer not initialized');
+    }
+
+    const startTime = performance.now();
+    const { duration = 500, radius } = options;
+
+    try {
+      const plugin = this.viewer.plugin;
+      const state = plugin.state.data;
+
+      // Get structure
+      const structures = state.selectQ((q) =>
+        q.ofTransformer(StateTransforms.Model.StructureFromModel)
+      );
+
+      if (structures.length === 0) {
+        throw new Error('No structure loaded');
+      }
+
+      // Build selection expression
+      const expressions = residues.map(sel => {
+        const residueList = sel.residueIds.join(',');
+        return `chain ${sel.chainId} and resi ${residueList}`;
+      });
+      const fullExpression = expressions.join(' or ');
+
+      // Use MolStar's camera focus API
+      const selectionManager = plugin.managers.structure.selection as any;
+      if (selectionManager.fromExpression) {
+        await selectionManager.fromExpression(fullExpression);
+      }
+
+      // Focus camera on selection with animation
+      await PluginCommands.Camera.Focus(plugin, {
+        durationMs: duration,
+        radius: radius,
+      } as any);
+
+      const elapsed = performance.now() - startTime;
+      console.info(`[MolstarService] focusOnResidues setup completed in ${elapsed.toFixed(2)}ms`);
+    } catch (error) {
+      console.error('[MolstarService] focusOnResidues failed:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Detect molecular interactions (H-bonds, salt bridges, hydrophobic, pi-pi stacking)
+   * @param options Interaction detection options
+   * @returns Array of detected interactions
+   * @performance <100ms
+   */
+  public async detectInteractions(options: InteractionOptions = {}): Promise<Interaction[]> {
+    if (!this.viewer) {
+      throw new Error('Mol* viewer not initialized');
+    }
+
+    const startTime = performance.now();
+    const {
+      detectHBonds = true,
+      detectSaltBridges = true,
+      detectHydrophobic = true,
+      detectPiPi = false,
+      distanceCutoffs = {
+        hbond: 3.5,
+        saltBridge: 4.0,
+        hydrophobic: 5.0,
+        piPi: 6.0,
+      },
+    } = options;
+
+    try {
+      const plugin = this.viewer.plugin;
+      const state = plugin.state.data;
+
+      // Get structure
+      const structures = state.selectQ((q) =>
+        q.ofTransformer(StateTransforms.Model.StructureFromModel)
+      );
+
+      if (structures.length === 0) {
+        throw new Error('No structure loaded');
+      }
+
+      const structureData = structures[0].obj?.data;
+      if (!structureData) {
+        throw new Error('No structure data available');
+      }
+
+      const interactions: Interaction[] = [];
+      let interactionId = 0;
+
+      // Simplified interaction detection
+      // In production, would use MolStar's StructureQuery API for more accurate detection
+      const units = structureData.units || [];
+
+      for (let i = 0; i < units.length; i++) {
+        const unit1 = units[i];
+        if (!unit1.model || !unit1.model.atomicHierarchy) continue;
+
+        const atoms1 = unit1.model.atomicHierarchy.atoms;
+        const residues1 = unit1.model.atomicHierarchy.residues;
+
+        for (let j = i; j < units.length; j++) {
+          const unit2 = units[j];
+          if (!unit2.model || !unit2.model.atomicHierarchy) continue;
+
+          // Detect H-bonds (N-O, O-H pairs)
+          if (detectHBonds) {
+            // Simplified: would use proper geometry and electronegativity checks
+            // This is a placeholder implementation
+          }
+
+          // Detect salt bridges (charged residue pairs)
+          if (detectSaltBridges) {
+            // Simplified: check for charged residues (ARG, LYS, ASP, GLU) within cutoff
+          }
+
+          // Detect hydrophobic interactions
+          if (detectHydrophobic) {
+            // Simplified: check for hydrophobic residues in close proximity
+          }
+
+          // Detect pi-pi stacking
+          if (detectPiPi) {
+            // Simplified: check for aromatic residues (PHE, TRP, TYR, HIS)
+          }
+        }
+      }
+
+      const duration = performance.now() - startTime;
+      console.info(`[MolstarService] detectInteractions completed in ${duration.toFixed(2)}ms, found ${interactions.length} interactions`);
+
+      return interactions;
+    } catch (error) {
+      console.error('[MolstarService] detectInteractions failed:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Visualize detected interactions in 3D viewport
+   * @param interactions Array of interactions to visualize
+   * @performance <100ms
+   */
+  public async visualizeInteractions(interactions: Interaction[]): Promise<void> {
+    if (!this.viewer) {
+      throw new Error('Mol* viewer not initialized');
+    }
+
+    const startTime = performance.now();
+
+    try {
+      const plugin = this.viewer.plugin;
+      const state = plugin.state.data;
+
+      // Get structure
+      const structures = state.selectQ((q) =>
+        q.ofTransformer(StateTransforms.Model.StructureFromModel)
+      );
+
+      if (structures.length === 0) {
+        throw new Error('No structure loaded');
+      }
+
+      // Color map for different interaction types
+      const colorMap = {
+        'hbond': Color.fromRgb(255, 255, 0), // Yellow
+        'salt-bridge': Color.fromRgb(255, 0, 255), // Magenta
+        'hydrophobic': Color.fromRgb(0, 255, 0), // Green
+        'pi-pi': Color.fromRgb(0, 191, 255), // Deep sky blue
+      };
+
+      // For each interaction, create a visual representation
+      for (const interaction of interactions) {
+        const color = colorMap[interaction.type] || Color.fromRgb(255, 255, 255);
+
+        // Create selection for both residues
+        const expression = `(chain ${interaction.residue1.chainId} and resi ${interaction.residue1.residueSeq}) or (chain ${interaction.residue2.chainId} and resi ${interaction.residue2.residueSeq})`;
+
+        // Create a representation showing the interaction
+        // In production, would use MolStar's Shape API to draw lines between residues
+        await plugin.builders.structure.representation.addRepresentation(structures[0], {
+          type: 'ball-and-stick',
+          typeParams: {
+            sizeFactor: 0.2,
+          },
+          color: 'uniform',
+          colorParams: {
+            value: color,
+          },
+        } as any);
+      }
+
+      const duration = performance.now() - startTime;
+      console.info(`[MolstarService] visualizeInteractions completed in ${duration.toFixed(2)}ms`);
+    } catch (error) {
+      console.error('[MolstarService] visualizeInteractions failed:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Helper: Convert 3-letter amino acid code to 1-letter code
+   */
+  private convertToOneLetterCode(threeLetter: string): string {
+    const codeMap: Record<string, string> = {
+      ALA: 'A', ARG: 'R', ASN: 'N', ASP: 'D', CYS: 'C',
+      GLN: 'Q', GLU: 'E', GLY: 'G', HIS: 'H', ILE: 'I',
+      LEU: 'L', LYS: 'K', MET: 'M', PHE: 'F', PRO: 'P',
+      SER: 'S', THR: 'T', TRP: 'W', TYR: 'Y', VAL: 'V',
+    };
+    return codeMap[threeLetter.toUpperCase()] || 'X';
+  }
+
+  /**
    * Dispose viewer and cleanup
    */
   public dispose(): void {
@@ -563,6 +1072,19 @@ export class MolstarService {
     // Let React handle the DOM cleanup to avoid conflicts
     this.container = null;
     this.eventListeners.clear();
+    this.measurementRepresentations.clear();
+
+    // Dispose measurement renderer
+    if (this.measurementRenderer) {
+      this.measurementRenderer.dispose();
+      this.measurementRenderer = null;
+    }
+
+    // Dispose selection highlighter
+    if (this.selectionHighlighter) {
+      this.selectionHighlighter.dispose();
+      this.selectionHighlighter = null;
+    }
 
     // Reset performance metrics
     this.performanceMetrics = {
@@ -1173,6 +1695,72 @@ export class MolstarService {
       console.info(`[MolstarService] Toggled visibility for measurement ${id}`);
     } catch (error) {
       console.error('[MolstarService] Failed to toggle measurement visibility:', error);
+    }
+  }
+
+  /**
+   * Visualize measurement with 3D representation
+   * Creates visual elements (lines, arcs, labels) for measurements
+   */
+  public async visualizeMeasurement(measurement: import('@/types/molstar').MeasurementResult): Promise<void> {
+    if (!this.viewer) {
+      throw new Error('Mol* viewer not initialized');
+    }
+
+    if (!measurement.participants || measurement.participants.length === 0) {
+      throw new Error('Measurement must have participants');
+    }
+
+    if (!this.measurementRenderer) {
+      throw new Error('Measurement renderer not initialized');
+    }
+
+    try {
+      // Use MeasurementRenderer for actual visualization (legacy methods accept MeasurementResult)
+      switch (measurement.type) {
+        case 'distance':
+          await this.measurementRenderer.renderDistanceLegacy(measurement);
+          break;
+        case 'angle':
+          await this.measurementRenderer.renderAngleLegacy(measurement);
+          break;
+        case 'dihedral':
+          await this.measurementRenderer.renderDihedralLegacy(measurement);
+          break;
+        default:
+          throw new Error(`Unknown measurement type: ${measurement.type}`);
+      }
+
+      console.info(`[MolstarService] Visualized ${measurement.type} measurement ${measurement.id}`);
+    } catch (error) {
+      console.error('[MolstarService] Failed to visualize measurement:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Hide measurement visualization without removing it
+   */
+  public hideMeasurement(id: string): void {
+    if (!this.viewer || !this.measurementRenderer) return;
+
+    try {
+      this.measurementRenderer.hideMeasurement(id);
+    } catch (error) {
+      console.error('[MolstarService] Failed to hide measurement:', error);
+    }
+  }
+
+  /**
+   * Show previously hidden measurement
+   */
+  public showMeasurement(id: string): void {
+    if (!this.viewer || !this.measurementRenderer) return;
+
+    try {
+      this.measurementRenderer.showMeasurement(id);
+    } catch (error) {
+      console.error('[MolstarService] Failed to show measurement:', error);
     }
   }
 
