@@ -78,6 +78,11 @@ export async function parsePDB(
   content: string,
   options: ParseOptions = {}
 ): Promise<ParsedStructure> {
+  // Validate input
+  if (!content || content.trim().length === 0) {
+    throw new Error('Empty or invalid PDB/CIF content');
+  }
+
   const startTime = Date.now();
   const { onProgress } = options;
 

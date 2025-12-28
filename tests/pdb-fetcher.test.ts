@@ -2,7 +2,7 @@
  * Tests for PDB fetcher service
  */
 
-import { describe, it, expect, jest, beforeEach } from '@jest/globals';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   fetchPDB,
   searchPDB,
@@ -13,11 +13,18 @@ import {
 } from '@/services/pdb-fetcher';
 
 // Mock fetch for testing
-global.fetch = jest.fn();
+global.fetch = vi.fn();
+
+// Valid mock PDB content (must be at least 100 chars)
+const MOCK_PDB_CONTENT = `HEADER    OXYGEN STORAGE/TRANSPORT                11-MAR-98   1MBN
+TITLE     MYOGLOBIN FROM SPERM WHALE
+ATOM      1  N   VAL A   1      18.660  19.770  24.040  1.00 41.54           N
+ATOM      2  CA  VAL A   1      19.000  20.920  23.180  1.00 40.44           C
+END`;
 
 describe('PDB Fetcher', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('ID Validation', () => {
@@ -56,17 +63,15 @@ describe('PDB Fetcher', () => {
 
   describe('fetchPDB', () => {
     it('should fetch from RCSB by default', async () => {
-      const mockPDB = 'HEADER    TEST\nATOM      1  N   VAL A   1      0.000   0.000   0.000  1.00  0.00           N';
-
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: true,
-        text: async () => mockPDB
+        text: async () => MOCK_PDB_CONTENT
       });
 
       const result = await fetchPDB('1MBN');
 
       expect(result.id).toBe('1MBN');
-      expect(result.content).toBe(mockPDB);
+      expect(result.content).toBe(MOCK_PDB_CONTENT);
       expect(result.source).toBe('rcsb');
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('rcsb.org'),
@@ -75,11 +80,11 @@ describe('PDB Fetcher', () => {
     });
 
     it('should retry on failure', async () => {
-      (global.fetch as jest.Mock)
+      (global.fetch as ReturnType<typeof vi.fn>)
         .mockRejectedValueOnce(new Error('Network error'))
         .mockResolvedValueOnce({
           ok: true,
-          text: async () => 'HEADER    TEST'
+          text: async () => MOCK_PDB_CONTENT
         });
 
       const result = await fetchPDB('1MBN', { retries: 2 });
@@ -89,11 +94,11 @@ describe('PDB Fetcher', () => {
     });
 
     it('should fallback to alternate sources', async () => {
-      (global.fetch as jest.Mock)
+      (global.fetch as ReturnType<typeof vi.fn>)
         .mockRejectedValueOnce(new Error('RCSB failed'))
         .mockResolvedValueOnce({
           ok: true,
-          text: async () => 'HEADER    TEST'
+          text: async () => MOCK_PDB_CONTENT
         });
 
       const result = await fetchPDB('1MBN', { source: 'auto', retries: 1 });
@@ -102,7 +107,7 @@ describe('PDB Fetcher', () => {
     });
 
     it('should handle timeout', async () => {
-      (global.fetch as jest.Mock).mockImplementationOnce(
+      (global.fetch as ReturnType<typeof vi.fn>).mockImplementationOnce(
         () => new Promise((resolve) => setTimeout(resolve, 2000))
       );
 
@@ -114,9 +119,9 @@ describe('PDB Fetcher', () => {
     it('should report progress', async () => {
       const progressUpdates: Array<{ progress: number; message: string }> = [];
 
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: true,
-        text: async () => 'HEADER    TEST'
+        text: async () => MOCK_PDB_CONTENT
       });
 
       await fetchPDB('1MBN', {
@@ -133,7 +138,7 @@ describe('PDB Fetcher', () => {
     it('should fetch mmCIF format', async () => {
       const mockCIF = 'data_1MBN\nloop_\n_atom_site.id';
 
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: true,
         text: async () => mockCIF
       });
@@ -150,9 +155,9 @@ describe('PDB Fetcher', () => {
 
   describe('fetchMultiplePDB', () => {
     it('should fetch multiple structures in parallel', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
         ok: true,
-        text: async () => 'HEADER    TEST'
+        text: async () => MOCK_PDB_CONTENT
       });
 
       const ids = ['1MBN', '2HHB', '1HEW'];
@@ -165,10 +170,10 @@ describe('PDB Fetcher', () => {
     });
 
     it('should continue on individual failures', async () => {
-      (global.fetch as jest.Mock)
-        .mockResolvedValueOnce({ ok: true, text: async () => 'HEADER    TEST' })
+      (global.fetch as ReturnType<typeof vi.fn>)
+        .mockResolvedValueOnce({ ok: true, text: async () => MOCK_PDB_CONTENT })
         .mockRejectedValueOnce(new Error('Failed'))
-        .mockResolvedValueOnce({ ok: true, text: async () => 'HEADER    TEST' });
+        .mockResolvedValueOnce({ ok: true, text: async () => MOCK_PDB_CONTENT });
 
       const ids = ['1MBN', '2HHB', '1HEW'];
       const results = await fetchMultiplePDB(ids, { retries: 1 });
@@ -179,9 +184,9 @@ describe('PDB Fetcher', () => {
     it('should report overall progress', async () => {
       const progressUpdates: number[] = [];
 
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
         ok: true,
-        text: async () => 'HEADER    TEST'
+        text: async () => MOCK_PDB_CONTENT
       });
 
       await fetchMultiplePDB(['1MBN', '2HHB'], {
@@ -211,7 +216,7 @@ describe('PDB Fetcher', () => {
         rcsb_entity_source_organism: []
       };
 
-      (global.fetch as jest.Mock)
+      (global.fetch as ReturnType<typeof vi.fn>)
         .mockResolvedValueOnce({
           ok: true,
           json: async () => mockSearchResults
@@ -229,7 +234,7 @@ describe('PDB Fetcher', () => {
     });
 
     it('should handle search errors', async () => {
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: false,
         status: 500
       });
@@ -240,9 +245,9 @@ describe('PDB Fetcher', () => {
 
   describe('Rate Limiting', () => {
     it('should respect rate limits', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
         ok: true,
-        text: async () => 'HEADER    TEST'
+        text: async () => MOCK_PDB_CONTENT
       });
 
       const start = Date.now();
@@ -263,9 +268,9 @@ describe('PDB Fetcher', () => {
 
   describe('Performance', () => {
     it('should fetch within target time', async () => {
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: true,
-        text: async () => 'HEADER    TEST'.repeat(1000)
+        text: async () => MOCK_PDB_CONTENT.repeat(1000)
       });
 
       const start = Date.now();

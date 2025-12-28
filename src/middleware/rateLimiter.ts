@@ -29,7 +29,7 @@ import {
 class MemoryRateLimitStore {
   private store: Map<string, { count: number; timestamps: number[] }> = new Map();
 
-  async increment(key: string, windowMs: number): Promise<RedisRateLimitResult> {
+  async increment(key: string, windowMs: number, maxRequests: number = Infinity): Promise<RedisRateLimitResult> {
     const now = Date.now();
     const windowStart = now - windowMs;
 
@@ -42,15 +42,21 @@ class MemoryRateLimitStore {
 
     // Remove expired timestamps
     record.timestamps = record.timestamps.filter(ts => ts > windowStart);
-
-    // Add current request
-    record.timestamps.push(now);
     record.count = record.timestamps.length;
 
+    // Check if limit exceeded
+    const allowed = record.count < maxRequests;
+
+    if (allowed) {
+      // Add current request only if allowed
+      record.timestamps.push(now);
+      record.count = record.timestamps.length;
+    }
+
     return {
-      allowed: true,
-      limit: 0,
-      remaining: 0,
+      allowed,
+      limit: maxRequests,
+      remaining: Math.max(0, maxRequests - record.count),
       reset: now + windowMs
     };
   }
@@ -142,7 +148,7 @@ export class RedisRateLimiter {
     // Use memory fallback if Redis unavailable
     if (!this.isRedisAvailable || !this.redis) {
       if (RATE_LIMIT_SETTINGS.fallbackToMemory) {
-        return this.memoryStore.increment(key, windowMs);
+        return this.memoryStore.increment(key, windowMs, maxRequests);
       }
 
       // Allow request if graceful degradation enabled

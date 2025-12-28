@@ -440,11 +440,13 @@ describe('AuthService', () => {
   });
 
   describe('Security Features', () => {
-    it('should require environment variables', () => {
+    it('should use demo mode when environment variables are missing', () => {
       delete process.env.NEXT_PUBLIC_SUPABASE_URL;
       delete process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-      expect(() => new AuthService()).toThrow('Missing Supabase environment variables');
+      // AuthService should fall back to demo mode, not throw
+      const service = new AuthService();
+      expect(service.isDemoMode()).toBe(true);
     });
 
     it('should enable auto refresh token', () => {

@@ -264,7 +264,10 @@ describe('LODManager', () => {
       expect(lodManager.canAffordLevel(complexity, LODLevel.FULL)).toBe(true);
     });
 
-    it('should return false for very large structures', () => {
+    it('should return false for structures exceeding memory budget', () => {
+      // Create a LOD manager with a small budget (100MB)
+      const smallBudgetManager = new LODManager({}, 100);
+
       const complexity: StructureComplexity = {
         atomCount: 100000,
         bondCount: 120000,
@@ -275,8 +278,9 @@ describe('LODManager', () => {
         estimatedVertices: 5000000,
       };
 
-      // With 512MB budget, this should exceed capacity
-      expect(lodManager.canAffordLevel(complexity, LODLevel.FULL)).toBe(false);
+      // With 100MB budget (80% threshold = 80MB), 100k atoms with surfaces should exceed
+      // Memory estimate: 100k * 50 vertices * 32 bytes * 1.3 = ~208 MB
+      expect(smallBudgetManager.canAffordLevel(complexity, LODLevel.FULL)).toBe(false);
     });
   });
 });

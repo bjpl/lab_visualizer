@@ -3,7 +3,7 @@
  * Comprehensive testing for molecular dynamics simulation
  */
 
-import { describe, it, expect, beforeEach } from '@jest/globals';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { createMDSimulation, MDSimulationService } from '../../src/services/md-simulation';
 
 describe('MDSimulationService', () => {

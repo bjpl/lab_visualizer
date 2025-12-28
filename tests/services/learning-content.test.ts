@@ -2,7 +2,7 @@
  * Learning Content Service Tests
  */
 
-import { describe, it, expect, beforeEach, jest } from '@jest/globals';
+import { describe, it, expect, beforeEach, jest } from 'vitest';
 import type { LearningModule, CreateModuleRequest } from '@/types/learning';
 
 // Mock Supabase

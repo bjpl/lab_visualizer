@@ -3,7 +3,7 @@
  * Test suite for tier selection and validation logic
  */
 
-import { describe, it, expect, beforeEach } from '@jest/globals';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { MDEngineService, mdEngine } from '../src/services/md-engine';
 import { MDTier } from '../src/types/md-types';
 

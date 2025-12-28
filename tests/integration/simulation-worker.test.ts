@@ -2,7 +2,7 @@
  * Integration Tests for OpenMM Simulation Worker
  */
 
-import { describe, it, expect, beforeAll, afterAll } from '@jest/globals';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { createClient } from '@supabase/supabase-js';
 import { SimulationMonitor } from '@/services/simulation-monitor';
 

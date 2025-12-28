@@ -2,7 +2,7 @@
  * Tests for PDB parser
  */
 
-import { describe, it, expect } from '@jest/globals';
+import { describe, it, expect } from 'vitest';
 import { parsePDB, validateStructure } from '@/lib/pdb-parser';
 
 // Sample PDB data
