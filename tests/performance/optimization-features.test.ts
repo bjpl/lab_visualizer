@@ -12,113 +12,12 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-
-// Mock implementations - these will be replaced with actual implementations
-interface ThrottleOptions {
-  maxEventsPerSecond: number;
-}
-
-interface DebounceOptions {
-  delayMs: number;
-}
-
-interface ResourceLimits {
-  maxMeasurements: number;
-  maxSelectedAtoms: number;
-  maxCacheMemoryMB: number;
-}
-
-interface VirtualScrollOptions {
-  itemCount: number;
-  visibleCount: number;
-  itemHeight: number;
-}
-
-// Placeholder functions that will fail initially
-function createThrottledHandler<T>(
-  handler: (event: T) => void,
-  options: ThrottleOptions
-): (event: T) => void {
-  // Not implemented yet - will fail tests
-  return handler;
-}
-
-function createDebouncedHandler<T>(
-  handler: (event: T) => void,
-  options: DebounceOptions
-): (event: T) => void {
-  // Not implemented yet - will fail tests
-  return handler;
-}
-
-class ResourceLimitManager {
-  constructor(private limits: ResourceLimits) {}
-
-  canAddMeasurement(): boolean {
-    // Not implemented yet - will fail tests
-    return true;
-  }
-
-  addMeasurement(): void {
-    // Not implemented yet - will fail tests
-  }
-
-  canSelectAtoms(count: number): boolean {
-    // Not implemented yet - will fail tests
-    return true;
-  }
-
-  selectAtoms(count: number): void {
-    // Not implemented yet - will fail tests
-  }
-
-  getCacheMemoryUsageMB(): number {
-    // Not implemented yet - will fail tests
-    return 0;
-  }
-
-  addToCache(sizeBytes: number): boolean {
-    // Not implemented yet - will fail tests
-    return true;
-  }
-
-  getCurrentMeasurementCount(): number {
-    // Not implemented yet - will fail tests
-    return 0;
-  }
-
-  getCurrentSelectedCount(): number {
-    // Not implemented yet - will fail tests
-    return 0;
-  }
-
-  reset(): void {
-    // Not implemented yet
-  }
-}
-
-class VirtualScrollRenderer {
-  constructor(private options: VirtualScrollOptions) {}
-
-  getVisibleItems(scrollPosition: number): number[] {
-    // Not implemented yet - will fail tests
-    return [];
-  }
-
-  getRenderedCount(): number {
-    // Not implemented yet - will fail tests
-    return this.options.itemCount;
-  }
-
-  scrollTo(position: number): void {
-    // Not implemented yet - will fail tests
-  }
-
-  measureRenderTime(): number {
-    // Not implemented yet - will fail tests
-    return 0;
-  }
-}
+import {
+  createThrottledHandler,
+  createDebouncedHandler,
+  ResourceLimitManager,
+  VirtualScrollRenderer,
+} from '@/utils/performance-optimization';
 
 describe('Performance Optimizations', () => {
   describe('Event Throttling', () => {
@@ -615,6 +514,15 @@ describe('Performance Optimizations', () => {
   });
 
   describe('Performance Metrics Integration', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+      vi.useRealTimers();
+    });
+
     it('should track throttle effectiveness', () => {
       const handler = vi.fn();
       const throttled = createThrottledHandler(handler, { maxEventsPerSecond: 10 });

@@ -49,7 +49,6 @@ export default defineConfig({
       '**/phase2-features.test.ts',
       // TDD tests pending implementation
       '**/SelectionManager.test.ts',
-      '**/optimization-features.test.ts',
       '**/3d-visualization.test.ts',
       '**/hydrogen-bond-detector.test.ts',
       '**/hbond-renderer.test.ts',
@@ -59,7 +58,6 @@ export default defineConfig({
       '**/measurement-visualization.test.ts',
       '**/selection-performance.test.ts',
       '**/highlighting-performance.test.ts',
-      '**/use-multi-selection.test.ts',
       // Rate limit tests require Redis - skip in CI
       '**/rate-limit-advanced.test.ts',
       '**/rateLimiter.test.ts',
