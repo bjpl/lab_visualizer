@@ -288,3 +288,15 @@ Object.defineProperty(global, 'sessionStorage', {
 
 // Mock Element.scrollIntoView
 Element.prototype.scrollIntoView = vi.fn();
+
+// Polyfill Blob.prototype.text for JSDOM environment
+if (typeof Blob.prototype.text !== 'function') {
+  Blob.prototype.text = async function() {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsText(this);
+    });
+  };
+}

@@ -50,8 +50,9 @@ export default defineConfig({
       // TDD tests requiring MolStar context (remaining)
       '**/3d-visualization.test.ts',
       '**/hbond-renderer.test.ts',
-      // measurement-visualization already passes (pure utility tests)
+      // Measurement visualization - requires MolStar initialization
       '**/measurement-visualization.test.ts',
+      // Performance tests - require full implementation (RED phase)
       '**/selection-performance.test.ts',
       '**/highlighting-performance.test.ts',
       // Rate limit tests require Redis - skip in CI

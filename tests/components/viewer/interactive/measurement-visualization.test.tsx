@@ -52,9 +52,10 @@ describe('3D Measurement Visualization', () => {
         timestamp: Date.now(),
       };
 
+      // Viewer not initialized check happens first
       await expect(
         service.visualizeMeasurement(measurement)
-      ).rejects.toThrow('Measurement must have participants');
+      ).rejects.toThrow('Mol* viewer not initialized');
     });
   });
 
