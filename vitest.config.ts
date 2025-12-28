@@ -48,7 +48,6 @@ export default defineConfig({
       // Playwright tests should be run separately
       '**/phase2-features.test.ts',
       // TDD tests requiring MolStar context (remaining)
-      '**/SelectionManager.test.ts',
       '**/3d-visualization.test.ts',
       '**/hbond-renderer.test.ts',
       '**/hydrogen-bond-renderer.test.ts',
@@ -62,8 +61,6 @@ export default defineConfig({
       // Component tests requiring Mol* viewer - run separately
       '**/MolStarViewer.test.tsx',
       '**/HydrogenBondsPanel.test.tsx',
-      '**/multi-selection.test.tsx',
-      '**/visual-feedback.test.tsx',
       // Integration tests requiring full environment
       '**/collaboration-integration.test.ts',
       '**/collaboration-viewer.test.ts',
