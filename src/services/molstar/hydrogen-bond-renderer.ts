@@ -7,10 +7,69 @@
  * - Configurable visibility and styling
  */
 
-import { PluginContext } from 'molstar/lib/mol-plugin/context';
-import { Color } from 'molstar/lib/mol-util/color';
-import { Vec3 } from 'molstar/lib/mol-math/linear-algebra';
-import type { HydrogenBond } from '@/services/interactions/hydrogen-bond-detector';
+/**
+ * Hydrogen bond data structure (local definition to avoid MolStar import chain)
+ */
+export interface HydrogenBond {
+  id: string;
+  donor: {
+    chainId: string;
+    residueSeq: number;
+    residueName: string;
+    atomName: string;
+    position: [number, number, number];
+  };
+  hydrogen?: {
+    atomName: string;
+    position: [number, number, number];
+  };
+  acceptor: {
+    chainId: string;
+    residueSeq: number;
+    residueName: string;
+    atomName: string;
+    position: [number, number, number];
+  };
+  distance: number;
+  angle: number;
+  strength: 'strong' | 'moderate' | 'weak';
+}
+
+/**
+ * Color type - number representing RGB hex value
+ */
+export type Color = number;
+
+/**
+ * Color utility function
+ */
+export function Color(value: number): Color {
+  return value;
+}
+
+/**
+ * Representation builder interface for testability
+ * Abstracts MolStar plugin's rendering capabilities
+ */
+export interface RepresentationBuilder {
+  createDashedLine: (id: string, start: [number, number, number], end: [number, number, number], color: Color, options?: { lineWidth?: number; dashLength?: number }) => void;
+  createLabel: (id: string, position: [number, number, number], text: string, options?: { color?: Color }) => void;
+  updateVisibility: (id: string, visible: boolean) => void;
+  remove: (id: string) => void;
+  clear: () => void;
+}
+
+/**
+ * Plugin interface that supports both MolStar and mocks
+ */
+export interface HBondPlugin {
+  representationBuilder: RepresentationBuilder;
+  state?: {
+    data?: {
+      selectQ?: (...args: any[]) => any[];
+    };
+  };
+}
 
 /**
  * H-bond representation tracked in memory
@@ -55,13 +114,13 @@ const DEFAULT_COLORS = {
  * Integrates with MolStar's Shape API for 3D rendering
  */
 export class HydrogenBondRenderer {
-  private plugin: PluginContext;
+  private plugin: HBondPlugin;
   private representations: Map<string, HBondRepresentation> = new Map();
   private config: Required<HBondRenderConfig>;
   private representationIds: Map<string, string[]> = new Map();
 
   constructor(
-    plugin: PluginContext,
+    plugin: HBondPlugin,
     config: HBondRenderConfig = {}
   ) {
     this.plugin = plugin;
@@ -162,9 +221,11 @@ export class HydrogenBondRenderer {
 
     repr.visible = visible;
 
-    // Note: Actual visibility toggle requires MolStar state integration
-    // The visibility state is tracked in the representation object
-    console.info(`[HydrogenBondRenderer] Set bond ${id} visibility: ${visible}`);
+    // Update visibility for all representation elements
+    const repIds = this.representationIds.get(id) || [];
+    for (const repId of repIds) {
+      this.plugin.representationBuilder.updateVisibility(repId, visible);
+    }
   }
 
   /**
@@ -210,11 +271,15 @@ export class HydrogenBondRenderer {
     }
 
     try {
+      // Remove all representation elements via plugin
+      const repIds = this.representationIds.get(id) || [];
+      for (const repId of repIds) {
+        this.plugin.representationBuilder.remove(repId);
+      }
+
       // Remove from internal tracking
       this.representations.delete(id);
       this.representationIds.delete(id);
-
-      console.info(`[HydrogenBondRenderer] Removed H-bond ${id}`);
     } catch (error) {
       console.error('[HydrogenBondRenderer] Failed to remove bond:', error);
     }
@@ -323,36 +388,55 @@ export class HydrogenBondRenderer {
 
   /**
    * Render bond geometry (line + optional label)
-   * Note: Uses MolStar's Shape API for 3D rendering when available
+   * Uses the plugin's representationBuilder for 3D rendering
    */
   private async renderBondGeometry(repr: HBondRepresentation): Promise<void> {
     const { bond, color } = repr;
     const lineId = `${bond.id}-line`;
     const labelId = `${bond.id}-label`;
 
-    // Convert positions to Vec3
-    const donorPos: Vec3 = Vec3.create(
+    // Get positions
+    const donorPos: [number, number, number] = [
       bond.donor.position[0],
       bond.donor.position[1],
-      bond.donor.position[2]
-    );
+      bond.donor.position[2],
+    ];
 
-    const acceptorPos: Vec3 = Vec3.create(
+    const acceptorPos: [number, number, number] = [
       bond.acceptor.position[0],
       bond.acceptor.position[1],
-      bond.acceptor.position[2]
-    );
+      bond.acceptor.position[2],
+    ];
 
     // Calculate midpoint for label
-    const midpoint: Vec3 = Vec3.create(
+    const midpoint: [number, number, number] = [
       (donorPos[0] + acceptorPos[0]) / 2,
       (donorPos[1] + acceptorPos[1]) / 2,
-      (donorPos[2] + acceptorPos[2]) / 2
+      (donorPos[2] + acceptorPos[2]) / 2,
+    ];
+
+    // Create dashed line via plugin's representationBuilder
+    this.plugin.representationBuilder.createDashedLine(
+      lineId,
+      donorPos,
+      acceptorPos,
+      color,
+      {
+        lineWidth: this.config.lineWidth,
+        dashLength: this.config.dashLength,
+      }
     );
 
-    // Note: Actual 3D rendering requires MolStar Shape API integration
-    // For now, we track the geometry data for future rendering
-    // The representation IDs are stored for management purposes
+    // Create label if enabled
+    if (this.config.showLabels) {
+      const labelText = `${bond.distance.toFixed(2)} Å`;
+      this.plugin.representationBuilder.createLabel(
+        labelId,
+        midpoint,
+        labelText,
+        { color }
+      );
+    }
 
     // Store representation IDs
     this.representationIds.set(

@@ -50,7 +50,7 @@ export default defineConfig({
       // TDD tests requiring MolStar context (remaining)
       '**/3d-visualization.test.ts',
       '**/hbond-renderer.test.ts',
-      '**/hydrogen-bond-renderer.test.ts',
+      // measurement-visualization already passes (pure utility tests)
       '**/measurement-visualization.test.ts',
       '**/selection-performance.test.ts',
       '**/highlighting-performance.test.ts',

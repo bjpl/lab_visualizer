@@ -6,8 +6,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { HydrogenBondRenderer } from '@/services/molstar/hydrogen-bond-renderer';
-import type { HydrogenBond } from '@/services/interactions/hydrogen-bond-detector';
+import { HydrogenBondRenderer, type HydrogenBond } from '@/services/molstar/hydrogen-bond-renderer';
 
 // Mock MolStar plugin
 const createMockPlugin = () => ({
@@ -348,7 +347,8 @@ describe('HydrogenBondRenderer', () => {
       renderer.clear();
 
       expect(renderer.getAllBonds()).toHaveLength(0);
-      expect(mockPlugin.representationBuilder.remove).toHaveBeenCalledTimes(2);
+      // 2 bonds with 2 representations each (line + label) = 4 remove calls
+      expect(mockPlugin.representationBuilder.remove).toHaveBeenCalledTimes(4);
     });
 
     it('should handle removing non-existent bond gracefully', () => {
