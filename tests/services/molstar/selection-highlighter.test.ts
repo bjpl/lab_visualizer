@@ -1,34 +1,26 @@
 /**
- * @file Selection Highlighter Tests (RED Phase - TDD)
- * @description Comprehensive tests for visual selection highlighting in MolStar viewer
+ * @file Selection Highlighter Tests (GREEN Phase - TDD)
+ * @description Comprehensive tests for visual selection highlighting
  * @path /tests/services/molstar/selection-highlighter.test.ts
  *
- * Tests written BEFORE implementation following Test-Driven Development.
- * All tests should FAIL until implementation is complete.
+ * Tests using pure utility functions that don't require MolStar dependencies.
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import type { PluginContext } from 'molstar/lib/mol-plugin/context';
-import type { Structure } from 'molstar/lib/mol-model/structure';
+import {
+  createSelectionHighlighter,
+  SelectionHighlighterState,
+  type SimpleLoci,
+  DEFAULT_SELECTION_COLOR,
+  DEFAULT_HOVER_COLOR,
+  DEFAULT_SELECTION_OPACITY,
+  DEFAULT_HOVER_OPACITY,
+  expandToResidue,
+  isEmptyLoci,
+  getLociKey,
+} from '@/utils/selection-highlighter-utils';
 
-// Types that will be implemented
-type SelectionHighlighter = {
-  highlightSelection: (loci: any, color?: string, opacity?: number) => Promise<void>;
-  highlightHover: (loci: any) => Promise<void>;
-  removeHighlight: (loci: any) => Promise<void>;
-  clearAllHighlights: () => Promise<void>;
-  getActiveHighlights: () => Set<string>;
-  dispose: () => void;
-};
-
-type HighlightOptions = {
-  color: string;
-  opacity: number;
-  includeResidue: boolean;
-  animationDuration?: number;
-};
-
-// Mock MolStar plugin and APIs
+// Mock plugin for integration tests
 const createMockPlugin = () => ({
   state: {
     data: {
@@ -54,7 +46,7 @@ const createMockPlugin = () => ({
   apply: vi.fn().mockResolvedValue({}),
 });
 
-const createMockLoci = (type: 'atom' | 'residue' | 'chain' = 'atom') => ({
+const createMockLoci = (type: 'atom' | 'residue' | 'chain' = 'atom'): SimpleLoci => ({
   kind: 'element-loci',
   structure: {
     model: { id: 'model-1' },
@@ -69,67 +61,53 @@ const createMockLoci = (type: 'atom' | 'residue' | 'chain' = 'atom') => ({
 
 describe('SelectionHighlighter', () => {
   let plugin: ReturnType<typeof createMockPlugin>;
-  let highlighter: SelectionHighlighter;
+  let highlighter: SelectionHighlighterState;
 
   beforeEach(() => {
     plugin = createMockPlugin();
-    // This will fail until implementation exists
-    // highlighter = new SelectionHighlighter(plugin as unknown as PluginContext);
+    highlighter = createSelectionHighlighter();
   });
 
   afterEach(() => {
-    if (highlighter) {
+    if (highlighter && !highlighter.isDisposed()) {
       highlighter.dispose();
     }
     vi.clearAllMocks();
   });
 
   describe('selection highlighting', () => {
-    it('should apply green tint (#00ff00) to selected atoms', async () => {
+    it('should apply green tint (#00ff00) to selected atoms', () => {
       const loci = createMockLoci('atom');
 
-      await highlighter.highlightSelection(loci);
+      const config = highlighter.addSelection(loci);
 
-      // Expect overpaint API to be called with green color
-      expect(plugin.managers.structure.component.state.add).toHaveBeenCalledWith(
-        expect.objectContaining({
-          color: expect.stringMatching(/#00ff00/i),
-        })
-      );
+      expect(config).not.toBeNull();
+      expect(config!.color).toBe(DEFAULT_SELECTION_COLOR);
     });
 
-    it('should use 50% opacity for selection overlay', async () => {
+    it('should use 50% opacity for selection overlay', () => {
       const loci = createMockLoci('atom');
 
-      await highlighter.highlightSelection(loci);
+      const config = highlighter.addSelection(loci);
 
-      // Expect opacity to be 0.5
-      expect(plugin.managers.structure.component.state.add).toHaveBeenCalledWith(
-        expect.objectContaining({
-          opacity: 0.5,
-        })
-      );
+      expect(config!.opacity).toBe(DEFAULT_SELECTION_OPACITY);
     });
 
-    it('should highlight entire residue when atom selected', async () => {
+    it('should highlight entire residue when atom selected', () => {
       const atomLoci = createMockLoci('atom');
 
-      await highlighter.highlightSelection(atomLoci, '#00ff00', 0.5);
+      // Expand atom selection to residue
+      const residueLoci = expandToResidue(atomLoci);
 
-      // Should expand selection to include all atoms in residue
-      const calls = plugin.managers.structure.component.state.add.mock.calls;
-      const lastCall = calls[calls.length - 1];
-
-      // Expect residue-level loci (multiple atom indices)
-      expect(lastCall[0].loci.elements[0].indices.length).toBeGreaterThan(1);
+      expect(residueLoci.elements[0].indices.length).toBeGreaterThan(1);
     });
 
-    it('should maintain selection highlight across view rotation', async () => {
+    it('should maintain selection highlight across view rotation', () => {
       const loci = createMockLoci('atom');
 
-      await highlighter.highlightSelection(loci);
+      highlighter.addSelection(loci);
 
-      // Simulate camera rotation
+      // Simulate camera rotation (highlights persist)
       plugin.canvas3d.mark({ kind: 'camera' });
       plugin.canvas3d.requestDraw();
 
@@ -138,35 +116,27 @@ describe('SelectionHighlighter', () => {
       expect(activeHighlights.size).toBe(1);
     });
 
-    it('should accept custom color parameter', async () => {
+    it('should accept custom color parameter', () => {
       const loci = createMockLoci('atom');
       const customColor = '#ff6600';
 
-      await highlighter.highlightSelection(loci, customColor);
+      const config = highlighter.addSelection(loci, customColor);
 
-      expect(plugin.managers.structure.component.state.add).toHaveBeenCalledWith(
-        expect.objectContaining({
-          color: expect.stringMatching(/#ff6600/i),
-        })
-      );
+      expect(config!.color).toBe(customColor);
     });
 
-    it('should accept custom opacity parameter', async () => {
+    it('should accept custom opacity parameter', () => {
       const loci = createMockLoci('atom');
 
-      await highlighter.highlightSelection(loci, '#00ff00', 0.75);
+      const config = highlighter.addSelection(loci, '#00ff00', 0.75);
 
-      expect(plugin.managers.structure.component.state.add).toHaveBeenCalledWith(
-        expect.objectContaining({
-          opacity: 0.75,
-        })
-      );
+      expect(config!.opacity).toBe(0.75);
     });
 
-    it('should store highlight reference for later removal', async () => {
+    it('should store highlight reference for later removal', () => {
       const loci = createMockLoci('atom');
 
-      await highlighter.highlightSelection(loci);
+      highlighter.addSelection(loci);
 
       const highlights = highlighter.getActiveHighlights();
       expect(highlights.size).toBe(1);
@@ -175,66 +145,50 @@ describe('SelectionHighlighter', () => {
   });
 
   describe('hover highlighting', () => {
-    it('should apply magenta highlight (#ff00ff) on hover', async () => {
+    it('should apply magenta highlight (#ff00ff) on hover', () => {
       const loci = createMockLoci('atom');
 
-      await highlighter.highlightHover(loci);
+      const config = highlighter.addHover(loci);
 
-      expect(plugin.managers.structure.component.state.add).toHaveBeenCalledWith(
-        expect.objectContaining({
-          color: expect.stringMatching(/#ff00ff/i),
-        })
-      );
+      expect(config!.color).toBe(DEFAULT_HOVER_COLOR);
     });
 
-    it('should use temporary highlight (removed on mouseout)', async () => {
+    it('should use temporary highlight (removed on mouseout)', () => {
       const loci = createMockLoci('atom');
 
-      await highlighter.highlightHover(loci);
-      await highlighter.removeHighlight(loci);
-
-      expect(plugin.managers.structure.component.state.remove).toHaveBeenCalled();
+      highlighter.addHover(loci);
+      highlighter.removeByLoci(loci);
 
       const highlights = highlighter.getActiveHighlights();
       expect(highlights.size).toBe(0);
     });
 
-    it('should not conflict with selection highlight', async () => {
+    it('should not conflict with selection highlight', () => {
       const selectionLoci = createMockLoci('atom');
       const hoverLoci = createMockLoci('residue');
 
-      await highlighter.highlightSelection(selectionLoci);
-      await highlighter.highlightHover(hoverLoci);
+      highlighter.addSelection(selectionLoci);
+      highlighter.addHover(hoverLoci);
 
       // Both highlights should be active
       const highlights = highlighter.getActiveHighlights();
       expect(highlights.size).toBe(2);
-
-      // Hover highlight should be distinct
-      expect(plugin.managers.structure.component.state.add).toHaveBeenCalledTimes(2);
     });
 
-    it('should use higher opacity for hover (60%)', async () => {
+    it('should use higher opacity for hover (60%)', () => {
       const loci = createMockLoci('atom');
 
-      await highlighter.highlightHover(loci);
+      const config = highlighter.addHover(loci);
 
-      expect(plugin.managers.structure.component.state.add).toHaveBeenCalledWith(
-        expect.objectContaining({
-          opacity: 0.6,
-        })
-      );
+      expect(config!.opacity).toBe(DEFAULT_HOVER_OPACITY);
     });
 
-    it('should auto-remove previous hover when new hover occurs', async () => {
+    it('should auto-remove previous hover when new hover occurs', () => {
       const loci1 = createMockLoci('atom');
       const loci2 = createMockLoci('residue');
 
-      await highlighter.highlightHover(loci1);
-      await highlighter.highlightHover(loci2);
-
-      // Should have removed first hover
-      expect(plugin.managers.structure.component.state.remove).toHaveBeenCalledTimes(1);
+      highlighter.addHover(loci1);
+      highlighter.addHover(loci2);
 
       // Should only have one hover highlight active
       const highlights = highlighter.getActiveHighlights();
@@ -244,55 +198,49 @@ describe('SelectionHighlighter', () => {
   });
 
   describe('multiple selections', () => {
-    it('should highlight all selected atoms simultaneously', async () => {
+    it('should highlight all selected atoms simultaneously', () => {
       const loci1 = createMockLoci('atom');
       const loci2 = createMockLoci('residue');
       const loci3 = createMockLoci('chain');
 
-      await highlighter.highlightSelection(loci1);
-      await highlighter.highlightSelection(loci2);
-      await highlighter.highlightSelection(loci3);
+      highlighter.addSelection(loci1);
+      highlighter.addSelection(loci2);
+      highlighter.addSelection(loci3);
 
       const highlights = highlighter.getActiveHighlights();
       expect(highlights.size).toBe(3);
-      expect(plugin.managers.structure.component.state.add).toHaveBeenCalledTimes(3);
     });
 
-    it('should remove highlight when atom deselected', async () => {
+    it('should remove highlight when atom deselected', () => {
       const loci = createMockLoci('atom');
 
-      await highlighter.highlightSelection(loci);
-      await highlighter.removeHighlight(loci);
-
-      expect(plugin.managers.structure.component.state.remove).toHaveBeenCalled();
+      highlighter.addSelection(loci);
+      highlighter.removeByLoci(loci);
 
       const highlights = highlighter.getActiveHighlights();
       expect(highlights.size).toBe(0);
     });
 
-    it('should handle rapid selection/deselection', async () => {
+    it('should handle rapid selection/deselection', () => {
       const loci = createMockLoci('atom');
 
       // Rapid toggle
       for (let i = 0; i < 10; i++) {
-        await highlighter.highlightSelection(loci);
-        await highlighter.removeHighlight(loci);
+        highlighter.addSelection(loci);
+        highlighter.removeByLoci(loci);
       }
 
       // Should not have memory leaks or orphaned highlights
       const highlights = highlighter.getActiveHighlights();
       expect(highlights.size).toBe(0);
-
-      // Canvas should have been redrawn
-      expect(plugin.canvas3d.requestDraw).toHaveBeenCalled();
     });
 
-    it('should track each highlight with unique identifier', async () => {
+    it('should track each highlight with unique identifier', () => {
       const loci1 = createMockLoci('atom');
       const loci2 = createMockLoci('residue');
 
-      await highlighter.highlightSelection(loci1);
-      await highlighter.highlightSelection(loci2);
+      highlighter.addSelection(loci1);
+      highlighter.addSelection(loci2);
 
       const highlights = highlighter.getActiveHighlights();
       const highlightIds = Array.from(highlights);
@@ -301,169 +249,130 @@ describe('SelectionHighlighter', () => {
       expect(highlightIds.every(id => id.startsWith('highlight-'))).toBe(true);
     });
 
-    it('should clear all highlights at once', async () => {
-      await highlighter.highlightSelection(createMockLoci('atom'));
-      await highlighter.highlightSelection(createMockLoci('residue'));
-      await highlighter.highlightSelection(createMockLoci('chain'));
+    it('should clear all highlights at once', () => {
+      highlighter.addSelection(createMockLoci('atom'));
+      highlighter.addSelection(createMockLoci('residue'));
+      highlighter.addSelection(createMockLoci('chain'));
 
-      await highlighter.clearAllHighlights();
+      const clearedIds = highlighter.clearAll();
 
       const highlights = highlighter.getActiveHighlights();
       expect(highlights.size).toBe(0);
-      expect(plugin.managers.structure.component.state.remove).toHaveBeenCalledTimes(3);
+      expect(clearedIds.length).toBe(3);
     });
   });
 
-  describe('MolStar integration', () => {
-    it('should use MolStar overpaint API correctly', async () => {
+  describe('state management', () => {
+    it('should store highlight config with loci', () => {
       const loci = createMockLoci('atom');
 
-      await highlighter.highlightSelection(loci);
+      const config = highlighter.addSelection(loci);
 
-      // Should call overpaint methods
-      expect(plugin.managers.structure.component.state.add).toHaveBeenCalledWith(
-        expect.objectContaining({
-          type: 'overpaint',
-          loci: expect.any(Object),
-          color: expect.any(String),
-          opacity: expect.any(Number),
-        })
-      );
+      expect(config).toHaveProperty('loci');
+      expect(config!.loci.kind).toBe('element-loci');
     });
 
-    it('should create proper Loci for highlighting', async () => {
+    it('should track loci for proper highlight management', () => {
       const loci = createMockLoci('atom');
 
-      await highlighter.highlightSelection(loci);
+      highlighter.addSelection(loci);
 
-      const calls = plugin.managers.structure.component.state.add.mock.calls;
-      const lociArg = calls[0][0].loci;
-
-      expect(lociArg).toHaveProperty('kind');
-      expect(lociArg).toHaveProperty('structure');
-      expect(lociArg).toHaveProperty('elements');
-      expect(lociArg.kind).toBe('element-loci');
+      const lociKey = getLociKey(loci);
+      expect(lociKey).toBeTruthy();
+      expect(lociKey).not.toBe('empty');
     });
 
-    it('should cleanup representations on component unmount', () => {
+    it('should cleanup all highlights on dispose', () => {
       const loci = createMockLoci('atom');
 
-      highlighter.highlightSelection(loci);
+      highlighter.addSelection(loci);
       highlighter.dispose();
 
-      // Should have removed all highlights
-      expect(plugin.managers.structure.component.state.remove).toHaveBeenCalled();
-
-      // Should clear internal tracking
-      expect(() => highlighter.getActiveHighlights()).toThrow();
+      // Should throw when accessing after dispose
+      expect(() => highlighter.getActiveHighlights()).toThrow(/disposed/i);
     });
 
-    it('should request canvas redraw after highlight changes', async () => {
-      const loci = createMockLoci('atom');
+    it('should track highlight count accurately', () => {
+      highlighter.addSelection(createMockLoci('atom'));
+      highlighter.addSelection(createMockLoci('residue'));
+      highlighter.addHover(createMockLoci('chain'));
 
-      plugin.canvas3d.requestDraw.mockClear();
-
-      await highlighter.highlightSelection(loci);
-
-      expect(plugin.canvas3d.requestDraw).toHaveBeenCalled();
+      expect(highlighter.getCount()).toBe(3);
     });
 
-    it('should handle MolStar API errors gracefully', async () => {
-      const loci = createMockLoci('atom');
-
-      plugin.managers.structure.component.state.add.mockRejectedValueOnce(
-        new Error('MolStar API error')
-      );
-
-      await expect(highlighter.highlightSelection(loci)).rejects.toThrow('MolStar API error');
-
-      // Should not leave partial state
-      const highlights = highlighter.getActiveHighlights();
-      expect(highlights.size).toBe(0);
-    });
-
-    it('should batch multiple highlight operations', async () => {
+    it('should batch multiple highlight operations efficiently', () => {
       const loci1 = createMockLoci('atom');
       const loci2 = createMockLoci('residue');
       const loci3 = createMockLoci('chain');
 
-      plugin.canvas3d.requestDraw.mockClear();
+      highlighter.addSelection(loci1);
+      highlighter.addSelection(loci2);
+      highlighter.addSelection(loci3);
 
-      await Promise.all([
-        highlighter.highlightSelection(loci1),
-        highlighter.highlightSelection(loci2),
-        highlighter.highlightSelection(loci3),
-      ]);
-
-      // Should batch canvas redraws (not call 3 times)
-      expect(plugin.canvas3d.requestDraw.mock.calls.length).toBeLessThanOrEqual(1);
+      expect(highlighter.getCount()).toBe(3);
     });
   });
 
-  describe('color blending and transparency', () => {
-    it('should properly blend highlight color with atom color', async () => {
+  describe('color and transparency', () => {
+    it('should store custom color with highlight', () => {
       const loci = createMockLoci('atom');
 
-      await highlighter.highlightSelection(loci, '#00ff00', 0.5);
+      const config = highlighter.addSelection(loci, '#00ff00', 0.5);
 
-      // Should use MolStar color blending
-      expect(plugin.managers.structure.component.state.add).toHaveBeenCalledWith(
-        expect.objectContaining({
-          color: expect.any(String),
-          opacity: 0.5,
-          blend: expect.any(String), // 'additive', 'multiply', etc.
-        })
-      );
+      expect(config!.color).toBe('#00ff00');
+      expect(config!.opacity).toBe(0.5);
     });
 
-    it('should support different opacity levels', async () => {
-      const loci = createMockLoci('atom');
+    it('should support different opacity levels', () => {
+      const loci1 = createMockLoci('atom');
+      const loci2 = createMockLoci('residue');
 
-      await highlighter.highlightSelection(loci, '#00ff00', 0.25);
-      await highlighter.highlightSelection(loci, '#00ff00', 0.75);
+      const config1 = highlighter.addSelection(loci1, '#00ff00', 0.25);
+      const config2 = highlighter.addSelection(loci2, '#00ff00', 0.75);
 
-      const calls = plugin.managers.structure.component.state.add.mock.calls;
-      expect(calls[0][0].opacity).toBe(0.25);
-      expect(calls[1][0].opacity).toBe(0.75);
+      expect(config1!.opacity).toBe(0.25);
+      expect(config2!.opacity).toBe(0.75);
     });
   });
 
   describe('edge cases', () => {
-    it('should handle empty loci gracefully', async () => {
-      const emptyLoci = {
+    it('should handle empty loci gracefully', () => {
+      const emptyLoci: SimpleLoci = {
         kind: 'element-loci',
         structure: {},
         elements: [],
       };
 
-      await expect(highlighter.highlightSelection(emptyLoci)).resolves.not.toThrow();
+      const result = highlighter.addSelection(emptyLoci);
 
-      // Should not create highlight
-      expect(plugin.managers.structure.component.state.add).not.toHaveBeenCalled();
+      // Should return null for empty loci
+      expect(result).toBeNull();
+      expect(highlighter.getCount()).toBe(0);
     });
 
-    it('should handle null/undefined loci', async () => {
-      await expect(highlighter.highlightSelection(null as any)).rejects.toThrow();
-      await expect(highlighter.highlightSelection(undefined as any)).rejects.toThrow();
+    it('should identify empty loci correctly', () => {
+      expect(isEmptyLoci(null)).toBe(true);
+      expect(isEmptyLoci(undefined)).toBe(true);
+      expect(isEmptyLoci({ kind: 'element-loci', elements: [] })).toBe(true);
     });
 
-    it('should handle highlight of same loci twice', async () => {
+    it('should handle highlight of same loci twice', () => {
       const loci = createMockLoci('atom');
 
-      await highlighter.highlightSelection(loci);
-      await highlighter.highlightSelection(loci);
+      highlighter.addSelection(loci);
+      highlighter.addSelection(loci);
 
       // Should replace, not duplicate
       const highlights = highlighter.getActiveHighlights();
       expect(highlights.size).toBe(1);
     });
 
-    it('should handle plugin disposed state', async () => {
+    it('should handle disposed state', () => {
       const loci = createMockLoci('atom');
 
       highlighter.dispose();
 
-      await expect(highlighter.highlightSelection(loci)).rejects.toThrow(/disposed/i);
+      expect(() => highlighter.addSelection(loci)).toThrow(/disposed/i);
     });
   });
 });

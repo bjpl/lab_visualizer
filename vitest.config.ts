@@ -47,14 +47,11 @@ export default defineConfig({
       'e2e',
       // Playwright tests should be run separately
       '**/phase2-features.test.ts',
-      // TDD tests pending implementation
+      // TDD tests requiring MolStar context (remaining)
       '**/SelectionManager.test.ts',
       '**/3d-visualization.test.ts',
-      '**/hydrogen-bond-detector.test.ts',
       '**/hbond-renderer.test.ts',
       '**/hydrogen-bond-renderer.test.ts',
-      '**/measurement-renderer.test.ts',
-      '**/selection-highlighter.test.ts',
       '**/measurement-visualization.test.ts',
       '**/selection-performance.test.ts',
       '**/highlighting-performance.test.ts',
