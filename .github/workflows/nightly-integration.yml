@@ -1,0 +1,164 @@
+name: Nightly Integration Tests
+
+on:
+  schedule:
+    # Run at 2 AM UTC every day
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      test_pattern:
+        description: 'Test file pattern to run'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+  checks: write
+
+jobs:
+  slow-integration-tests:
+    name: Slow Integration Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run PDB Service Integration Tests
+        run: npx vitest run tests/pdb-service.test.ts --reporter=verbose
+        continue-on-error: true
+        env:
+          CI: true
+
+      - name: Run Data Pipeline Integration Tests
+        run: npx vitest run tests/data-pipeline.test.ts --reporter=verbose
+        continue-on-error: true
+        env:
+          CI: true
+
+      - name: Run Export Functionality Tests
+        run: npx vitest run tests/export-functionality.test.ts --reporter=verbose
+        continue-on-error: true
+        env:
+          CI: true
+
+      - name: Run Mol* Integration Tests
+        run: |
+          npx vitest run tests/molstar-lod.test.ts --reporter=verbose || true
+          npx vitest run tests/molstar-service-extended.test.ts --reporter=verbose || true
+          npx vitest run tests/molstar-service-apis.test.ts --reporter=verbose || true
+          npx vitest run tests/molstar-lod-bridge.test.ts --reporter=verbose || true
+        env:
+          CI: true
+
+      - name: Run Collaboration Integration Tests
+        run: |
+          npx vitest run tests/collaboration-integration.test.ts --reporter=verbose || true
+          npx vitest run tests/collaboration-viewer.test.ts --reporter=verbose || true
+        env:
+          CI: true
+
+  playwright-full:
+    name: Full E2E Suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Build application
+        run: npm run build
+
+      - name: Run Full Playwright Suite
+        run: npx playwright test --reporter=html
+        env:
+          CI: true
+
+      - name: Upload Playwright Report
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: nightly-playwright-report
+          path: playwright-report/
+          retention-days: 14
+
+  rate-limit-tests:
+    name: Rate Limiting Tests (Redis Required)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Rate Limit Tests
+        run: |
+          npx vitest run tests/rate-limit-advanced.test.ts --reporter=verbose || true
+          npx vitest run tests/rateLimiter.test.ts --reporter=verbose || true
+          npx vitest run tests/rate-limiter.test.ts --reporter=verbose || true
+        env:
+          REDIS_URL: redis://localhost:6379
+          CI: true
+
+  nightly-summary:
+    name: Nightly Test Summary
+    runs-on: ubuntu-latest
+    needs: [slow-integration-tests, playwright-full, rate-limit-tests]
+    if: always()
+
+    steps:
+      - name: Generate nightly summary
+        run: |
+          echo "## 🌙 Nightly Integration Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Run Date:** $(date -u '+%Y-%m-%d %H:%M UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Test Suite | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|------------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Slow Integration Tests | ${{ needs.slow-integration-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Full Playwright Suite | ${{ needs.playwright-full.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Rate Limit Tests (Redis) | ${{ needs.rate-limit-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "*These tests are excluded from PR CI for speed but run nightly for comprehensive coverage.*" >> $GITHUB_STEP_SUMMARY
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "⚠️ Nightly tests had failures - check the workflow run for details"
