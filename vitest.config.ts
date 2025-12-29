@@ -47,14 +47,8 @@ export default defineConfig({
       'e2e',
       // Playwright tests should be run separately
       '**/phase2-features.test.ts',
-      // TDD tests requiring MolStar context (remaining)
-      '**/3d-visualization.test.ts',
+      // TDD RED phase - contract tests without implementation
       '**/hbond-renderer.test.ts',
-      // Measurement visualization - requires MolStar initialization
-      '**/measurement-visualization.test.ts',
-      // Performance tests - require full implementation (RED phase)
-      '**/selection-performance.test.ts',
-      '**/highlighting-performance.test.ts',
       // Rate limit tests require Redis - skip in CI
       '**/rate-limit-advanced.test.ts',
       '**/rateLimiter.test.ts',

@@ -9,7 +9,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import type { HydrogenBond } from './hydrogen-bond-detector.test';
+import type { HydrogenBond } from '@/utils/hydrogen-bond-utils';
 
 interface RenderOptions {
   color?: [number, number, number]; // RGB 0-1
