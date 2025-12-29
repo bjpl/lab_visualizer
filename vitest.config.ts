@@ -63,6 +63,10 @@ export default defineConfig({
       '**/molstar-service-extended.test.ts',
       '**/molstar-service-apis.test.ts',
       '**/molstar-lod-bridge.test.ts',
+      // Slow integration tests requiring external APIs
+      '**/pdb-service.test.ts',
+      '**/data-pipeline.test.ts',
+      '**/export-functionality.test.ts',
     ],
     testTimeout: 30000,
     hookTimeout: 30000,
