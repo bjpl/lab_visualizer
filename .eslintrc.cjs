@@ -72,6 +72,9 @@ module.exports = {
     'jsx-a11y/heading-has-content': 'warn',
     '@typescript-eslint/no-empty-object-type': 'warn',
     '@typescript-eslint/ban-ts-comment': 'warn',
+
+    // React compiler rules (disabled for compatibility)
+    'react-compiler/react-compiler': 'off',
   },
   settings: {
     react: {
