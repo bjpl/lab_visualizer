@@ -310,9 +310,8 @@ jobs:
           curl -s https://lab-viz.vercel.app/queue > /dev/null
 
       - name: Create Sentry release
-        if: ${{ secrets.SENTRY_AUTH_TOKEN != '' }}
         uses: getsentry/action-release@v1
-        continue-on-error: true  # Sentry is optional
+        continue-on-error: true  # Sentry is optional - will fail if secrets not set
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
@@ -346,18 +345,23 @@ jobs:
         env:
           TEST_URL: https://lab-viz.vercel.app
 
-      - name: Monitor error rate (skip if no Sentry)
-        if: ${{ secrets.SENTRY_AUTH_TOKEN != '' }}
-        continue-on-error: true
+      - name: Monitor error rate
+        continue-on-error: true  # Sentry is optional
         run: |
+          if [ -z "$SENTRY_AUTH_TOKEN" ]; then
+            echo "Sentry not configured, skipping error monitoring"
+            exit 0
+          fi
           echo "Monitoring error rate..."
-          # Skip the 5-minute wait for faster CI
           ERROR_COUNT=$(curl -s \
-            -H "Authorization: Bearer ${{ secrets.SENTRY_AUTH_TOKEN }}" \
-            "https://sentry.io/api/0/projects/${{ secrets.SENTRY_ORG }}/${{ secrets.SENTRY_PROJECT }}/issues/?query=is:unresolved&statsPeriod=5m" \
+            -H "Authorization: Bearer $SENTRY_AUTH_TOKEN" \
+            "https://sentry.io/api/0/projects/$SENTRY_ORG/$SENTRY_PROJECT/issues/?query=is:unresolved&statsPeriod=5m" \
             | jq 'length' || echo "0")
-
           echo "Error count: $ERROR_COUNT"
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
 
       - name: Rollback on failure
         if: failure() && env.VERCEL_DEPLOY_SUCCEEDED == 'true'
@@ -367,8 +371,8 @@ jobs:
           # Rollback logic here if needed
 
       - name: Notify Slack (success)
-        if: success() && secrets.SLACK_WEBHOOK_URL != ''
-        continue-on-error: true
+        if: success()
+        continue-on-error: true  # Slack is optional
         uses: slackapi/slack-github-action@v1.24.0
         with:
           webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
@@ -387,8 +391,8 @@ jobs:
             }
 
       - name: Notify Slack (failure)
-        if: failure() && secrets.SLACK_WEBHOOK_URL != ''
-        continue-on-error: true
+        if: failure()
+        continue-on-error: true  # Slack is optional
         uses: slackapi/slack-github-action@v1.24.0
         with:
           webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
