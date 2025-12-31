@@ -23,8 +23,8 @@ on:
         default: false
 
 env:
-  NODE_VERSION: '18.x'
-  NPM_VERSION: '9.x'
+  NODE_VERSION: '20.x'
+  NPM_VERSION: '10.x'
 
 jobs:
   # ==========================================================================

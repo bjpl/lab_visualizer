@@ -71,7 +71,7 @@
     "jspdf": "^3.0.4",
     "lucide-react": "^0.554.0",
     "molstar": "^5.4.1",
-    "next": "^14.2.33",
+    "next": "^14.2.35",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "tailwind-merge": "^3.4.0",
