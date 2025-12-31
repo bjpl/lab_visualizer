@@ -71,6 +71,7 @@ module.exports = {
     'no-constant-condition': 'warn',
     'jsx-a11y/heading-has-content': 'warn',
     '@typescript-eslint/no-empty-object-type': 'warn',
+    '@typescript-eslint/ban-ts-comment': 'warn',
   },
   settings: {
     react: {
