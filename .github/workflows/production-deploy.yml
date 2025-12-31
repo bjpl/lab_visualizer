@@ -49,8 +49,11 @@ jobs:
         run: npm run format:check
         continue-on-error: true  # Allow format issues without blocking deployment
 
-      - name: Unit tests
-        run: npm run test:unit -- --coverage
+      - name: Run tests with coverage
+        run: npm run test:ci
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
@@ -58,13 +61,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage/coverage-final.json
           flags: unittests
-          fail_ci_if_error: true
-
-      - name: Integration tests
-        run: npm run test:integration
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          fail_ci_if_error: false  # Don't fail if codecov has issues
 
       - name: Save test results
         if: always()
