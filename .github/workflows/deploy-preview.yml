@@ -48,7 +48,7 @@ jobs:
           working-directory: ./
 
       - name: Comment PR with preview URL
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const url = '${{ steps.deploy.outputs.url }}';
@@ -100,7 +100,7 @@ jobs:
     if: github.event.action == 'closed'
     steps:
       - name: Delete preview deployment
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             console.log('Preview deployment will be automatically cleaned up by Vercel');
