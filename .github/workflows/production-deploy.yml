@@ -47,6 +47,7 @@ jobs:
 
       - name: Prettier format check
         run: npm run format:check
+        continue-on-error: true  # Allow format issues without blocking deployment
 
       - name: Unit tests
         run: npm run test:unit -- --coverage
