@@ -79,7 +79,7 @@
     "zustand": "^5.0.8"
   },
   "optionalDependencies": {
-    "@rollup/rollup-linux-x64-gnu": "^4.53.2",
+    "@rollup/rollup-linux-x64-gnu": "^4.53.5",
     "@vercel/kv": "^3.0.0"
   },
   "devDependencies": {
